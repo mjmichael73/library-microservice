@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:17.2-alpine
+    container_name: userservice-db
+    ports:
+      - "54322:5432"
+    environment:
+      POSTGRES_DB: userservice_db
+      POSTGRES_USER: userservice_db_user
+      POSTGRES_PASSWORD: userservice_db_password
+    volumes:
+      - userservice_db_data:/var/lib/postgresql/data
+      - ./data:/data
+    networks:
+      - userservice_net
+
+volumes:
+  userservice_db_data:
+
+
+networks:
+  userservice_net:
+    driver: bridge
