@@ -1,0 +1,1 @@
+go mod init github.com/mjmichael73/library-microservice/userservice
