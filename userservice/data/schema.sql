@@ -5,6 +5,6 @@ CREATE TABLE
         user_id UUID PRIMARY KEY,
         first_name VARCHAR,
         last_name VARCHAR,
-        email VARCHAR,
+        email VARCHAR UNIQUE NOT NULL,
         password VARCHAR
     );

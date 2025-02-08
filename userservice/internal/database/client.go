@@ -1,9 +1,11 @@
 package database
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"github.com/mjmichael73/library-microservice/userservice/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -11,6 +13,9 @@ import (
 
 type DatabaseClient interface {
 	Ready() bool
+
+	// User
+	RegisterUser(ctx context.Context, user *models.User) (*models.User, error)
 }
 
 type Client struct {
@@ -21,7 +26,7 @@ func NewDatabaseClient() (DatabaseClient, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", "localhost", 54322, "userservice_db_user", "userservice_db_password", "userservice_db", "disable")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix: "wisdom.",
+			TablePrefix: "userservice.",
 		},
 		NowFunc: func() time.Time {
 			return time.Now().UTC()

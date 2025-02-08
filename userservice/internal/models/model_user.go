@@ -5,5 +5,31 @@ type User struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `gorm:"uniqueIndex;not null" json:"email"`
-	Password  string `gorm:"uniqueIndex;not null" json:"-"`
+	Password  string `gorm:"not null" json:"-"`
+}
+
+type RegisterRequest struct {
+	FirstName string `json:"first_name" validate:"required"`
+	LastName  string `json:"last_name" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required"`
+}
+
+type RegisterResponse struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Token     string `json:"token"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+type LoginResponse struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Token     string `json:"token"`
 }
