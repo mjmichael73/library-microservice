@@ -39,7 +39,10 @@ type Server interface {
 	// User routes
 	RegisterUser(ctx echo.Context) error
 	LoginUser(ctx echo.Context) error
+
+	// User Authenticated Routes
 	ValidateToken(ctx echo.Context) error
+	IsAdmin(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -84,7 +87,9 @@ func (s *EchoServer) registerRoutes() {
 	authGroup := s.echo.Group("/auth")
 	authGroup.POST("/register", s.RegisterUser)
 	authGroup.POST("/login", s.LoginUser)
-	// authGroup.Use(middleware.JWT([]byte("your-secret-key")))
-	authGroup.Use(echojwt.JWT([]byte("your-secret-key")))
-	authGroup.GET("/validate-token", s.ValidateToken)
+
+	userGroup := s.echo.Group("/user")
+	userGroup.Use(echojwt.JWT([]byte("your-secret-key")))
+	userGroup.GET("/validate-token", s.ValidateToken)
+	userGroup.GET("/is-admin", s.IsAdmin)
 }

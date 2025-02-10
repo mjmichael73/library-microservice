@@ -17,6 +17,7 @@ type DatabaseClient interface {
 	// User
 	RegisterUser(ctx context.Context, user *models.User) (*models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	GetUserById(ctx context.Context, ID string) (*models.User, error)
 }
 
 type Client struct {

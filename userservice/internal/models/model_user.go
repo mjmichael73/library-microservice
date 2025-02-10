@@ -6,6 +6,7 @@ type User struct {
 	LastName  string `json:"last_name"`
 	Email     string `gorm:"uniqueIndex;not null" json:"email"`
 	Password  string `gorm:"not null" json:"-"`
+	IsAdmin   bool   `json:"is_admin"`
 }
 
 type RegisterRequest struct {
@@ -32,4 +33,5 @@ type LoginResponse struct {
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	Token     string `json:"token"`
+	IsAdmin   bool   `json:"is_admin"`
 }

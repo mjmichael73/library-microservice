@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -148,7 +147,6 @@ func (s *EchoServer) LoginUser(ctx echo.Context) error {
 }
 
 func (s *EchoServer) ValidateToken(ctx echo.Context) error {
-	fmt.Println("hi")
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"]
@@ -156,5 +154,42 @@ func (s *EchoServer) ValidateToken(ctx echo.Context) error {
 		"status":  "Success",
 		"message": "User is valid",
 		"data":    userID,
+	})
+}
+
+func (s *EchoServer) IsAdmin(ctx echo.Context) error {
+	userJWT := ctx.Get("user").(*jwt.Token)
+	claims := userJWT.Claims.(jwt.MapClaims)
+	userJWTID, ok := claims["user_id"].(string)
+	if !ok {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"status":  "Failed",
+			"message": "Internal server error, please try again later.",
+		})
+	}
+	user, err := s.DB.GetUserById(ctx.Request().Context(), userJWTID)
+	if err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusUnauthorized, echo.Map{
+				"status":  "Failed",
+				"message": "User not found or is not an admin.",
+			})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, echo.Map{
+				"status":  "Failed",
+				"message": "Internal server error, please try again later.",
+			})
+		}
+	}
+	if !user.IsAdmin {
+		return ctx.JSON(http.StatusUnauthorized, echo.Map{
+			"status":  "Failed",
+			"message": "User not found or is not an admin.",
+		})
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "User is an admin.",
 	})
 }

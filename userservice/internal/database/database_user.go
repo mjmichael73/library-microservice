@@ -23,6 +23,18 @@ func (c Client) GetUserByEmail(ctx context.Context, email string) (*models.User,
 	return user, nil
 }
 
+func (c Client) GetUserById(ctx context.Context, ID string) (*models.User, error) {
+	user := &models.User{}
+	result := c.DB.WithContext(ctx).Where(&models.User{UserID: ID}).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, &dberrors.NotFoundError{}
+		}
+		return nil, result.Error
+	}
+	return user, nil
+}
+
 func (c Client) RegisterUser(ctx context.Context, user *models.User) (*models.User, error) {
 	user.UserID = uuid.NewString()
 	result := c.DB.WithContext(ctx).Create(&user)

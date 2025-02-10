@@ -6,5 +6,6 @@ CREATE TABLE
         first_name VARCHAR,
         last_name VARCHAR,
         email VARCHAR UNIQUE NOT NULL,
+        is_admin BOOLEAN DEFAULT FALSE,
         password VARCHAR
     );
