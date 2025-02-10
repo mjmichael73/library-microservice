@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:17.2-alpine
+    container_name: bookservice-db
+    ports:
+      - "54323:5432"
+    environment:
+      POSTGRES_DB: bookservice_db
+      POSTGRES_USER: bookservice_db_user
+      POSTGRES_PASSWORD: bookservice_db_password
+    volumes:
+      - bookservice_db_data:/var/lib/postgresql/data
+      - ./data:/data
+    networks:
+      - bookservice_net
+
+volumes:
+  bookservice_db_data:
+
+
+networks:
+  bookservice_net:
+    driver: bridge
