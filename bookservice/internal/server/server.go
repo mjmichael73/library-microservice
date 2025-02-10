@@ -37,6 +37,8 @@ type Server interface {
 
 	// Admin Genre CRUD
 	GetAllGenres(ctx echo.Context) error
+	CreateGenre(ctx echo.Context) error
+
 	GetAllAuthors(ctx echo.Context) error
 }
 
@@ -84,6 +86,7 @@ func (s *EchoServer) registerRoutes() {
 	// Admin Genres
 	adminGenreGroup := adminGroup.Group("/genres")
 	adminGenreGroup.GET("", s.GetAllGenres)
+	adminGenreGroup.POST("", s.CreateGenre)
 
 	// Admin Authors
 	adminAuthorGroup := adminGroup.Group("/authors")

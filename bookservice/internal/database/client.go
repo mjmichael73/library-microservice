@@ -14,8 +14,12 @@ import (
 type DatabaseClient interface {
 	Ready() bool
 
-	// Genres CRUD
+	// Genres
 	GetAllGenres(ctx context.Context, title string) ([]models.Genre, error)
+	GetGenreByTitle(ctx context.Context, title string) (*models.Genre, error)
+	CreateGenre(ctx context.Context, genre *models.Genre) (*models.Genre, error)
+
+	// Authors
 	GetAllAuthors(ctx context.Context, name string) ([]models.Author, error)
 }
 
