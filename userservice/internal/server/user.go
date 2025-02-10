@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -144,4 +145,16 @@ func (s *EchoServer) LoginUser(ctx echo.Context) error {
 		"data":    loginResponse,
 	})
 
+}
+
+func (s *EchoServer) ValidateToken(ctx echo.Context) error {
+	fmt.Println("hi")
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID := claims["user_id"]
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "User is valid",
+		"data":    userID,
+	})
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/mjmichael73/library-microservice/userservice/internal/database"
 	"github.com/mjmichael73/library-microservice/userservice/internal/models"
@@ -38,6 +39,7 @@ type Server interface {
 	// User routes
 	RegisterUser(ctx echo.Context) error
 	LoginUser(ctx echo.Context) error
+	ValidateToken(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -82,4 +84,7 @@ func (s *EchoServer) registerRoutes() {
 	authGroup := s.echo.Group("/auth")
 	authGroup.POST("/register", s.RegisterUser)
 	authGroup.POST("/login", s.LoginUser)
+	// authGroup.Use(middleware.JWT([]byte("your-secret-key")))
+	authGroup.Use(echojwt.JWT([]byte("your-secret-key")))
+	authGroup.GET("/validate-token", s.ValidateToken)
 }
