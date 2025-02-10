@@ -16,6 +16,7 @@ type DatabaseClient interface {
 
 	// Genres CRUD
 	GetAllGenres(ctx context.Context, title string) ([]models.Genre, error)
+	GetAllAuthors(ctx context.Context, name string) ([]models.Author, error)
 }
 
 type Client struct {
