@@ -60,13 +60,13 @@ func (s *EchoServer) RegisterUser(ctx echo.Context) error {
 		"user_id": user.UserID,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	})
+	tokenString, err := token.SignedString(jwtSecret)
 	registerResponse := models.RegisterResponse{
 		FirstName: resultUser.FirstName,
 		LastName:  resultUser.LastName,
 		Email:     resultUser.Email,
-		Token:     "",
+		Token:     token.Raw,
 	}
-	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, echo.Map{
 			"status":  "Failed",
@@ -80,4 +80,68 @@ func (s *EchoServer) RegisterUser(ctx echo.Context) error {
 		"message": "Registration was successfull",
 		"data":    registerResponse,
 	})
+}
+
+func (s *EchoServer) LoginUser(ctx echo.Context) error {
+	loginRequest := new(models.LoginRequest)
+	if err := ctx.Bind(loginRequest); err != nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "Invalid request",
+		})
+	}
+	if err := ctx.Validate(loginRequest); err != nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "Please fix validation errors",
+			"errors":  FormatValidationErrors(err),
+		})
+	}
+
+	// Check if user exist
+	user, err := s.DB.GetUserByEmail(ctx.Request().Context(), loginRequest.Email)
+	if err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusUnauthorized, echo.Map{
+				"status":  "Failed",
+				"message": "Email or password is wrong",
+			})
+		default:
+			return ctx.JSON(http.StatusNotFound, echo.Map{
+				"status":  "Failed",
+				"message": "Internal server error, please try again later.",
+			})
+		}
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginRequest.Password)); err != nil {
+		return ctx.JSON(http.StatusUnauthorized, echo.Map{
+			"status":  "Failed",
+			"message": "Email or password is wrong",
+		})
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.UserID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	})
+	tokenString, err := token.SignedString(jwtSecret)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"status":  "Failed",
+			"message": "Internal server error, please try again later.",
+		})
+	}
+	loginResponse := models.LoginResponse{
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
+		Token:     tokenString,
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Login was successfull",
+		"data":    loginResponse,
+	})
+
 }

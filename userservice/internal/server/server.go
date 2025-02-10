@@ -37,6 +37,7 @@ type Server interface {
 
 	// User routes
 	RegisterUser(ctx echo.Context) error
+	LoginUser(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -80,4 +81,5 @@ func (s *EchoServer) registerRoutes() {
 
 	authGroup := s.echo.Group("/auth")
 	authGroup.POST("/register", s.RegisterUser)
+	authGroup.POST("/login", s.LoginUser)
 }

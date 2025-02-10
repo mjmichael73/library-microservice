@@ -11,6 +11,18 @@ import (
 	"gorm.io/gorm"
 )
 
+func (c Client) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	user := &models.User{}
+	result := c.DB.WithContext(ctx).Where(&models.User{Email: email}).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, &dberrors.NotFoundError{}
+		}
+		return nil, result.Error
+	}
+	return user, nil
+}
+
 func (c Client) RegisterUser(ctx context.Context, user *models.User) (*models.User, error) {
 	user.UserID = uuid.NewString()
 	result := c.DB.WithContext(ctx).Create(&user)
