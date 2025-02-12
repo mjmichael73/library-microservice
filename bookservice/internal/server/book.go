@@ -2,8 +2,12 @@ package server
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/mjmichael73/library-microservice/bookservice/internal/dberrors"
+	"github.com/mjmichael73/library-microservice/bookservice/internal/models"
 )
 
 func (s *EchoServer) GetAllBooks(ctx echo.Context) error {
@@ -17,4 +21,58 @@ func (s *EchoServer) GetAllBooks(ctx echo.Context) error {
 		"message": "Books received successfully.",
 		"data":    books,
 	})
+}
+
+func (s *EchoServer) CreateBook(ctx echo.Context) error {
+	createBookRequest := new(models.CreateBookRequest)
+	if err := ctx.Bind(createBookRequest); err != nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "Bad request.",
+		})
+	}
+	if err := ctx.Validate(createBookRequest); err != nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "Please fix validation errors",
+			"errors":  FormatValidationErrors(err),
+		})
+	}
+	book, err := s.DB.GetBookByTitle(ctx.Request().Context(), createBookRequest.Title)
+	if err == nil && book != nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "Book with this title already exists.",
+		})
+	}
+	switch err.(type) {
+	case *dberrors.NotFoundError:
+		newBook := &models.Book{
+			BookID:    uuid.NewString(),
+			Title:     createBookRequest.Title,
+			Summary:   createBookRequest.Summary,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		newBook, err := s.DB.CreateBook(ctx.Request().Context(), newBook)
+		if err != nil {
+			switch err.(type) {
+			case *dberrors.ConflictError:
+				return ctx.JSON(http.StatusBadRequest, echo.Map{
+					"status":  "Failed",
+					"message": "PBook with this title already exists",
+				})
+			default:
+				return ctx.JSON(http.StatusInternalServerError, err)
+			}
+		}
+		return ctx.JSON(http.StatusCreated, echo.Map{
+			"status":  "Success",
+			"message": "Book created successfully.",
+			"data":    newBook,
+		})
+
+	default:
+		return ctx.JSON(http.StatusInternalServerError, err)
+	}
 }

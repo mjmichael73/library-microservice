@@ -22,6 +22,7 @@ func (c Client) GetGenreByTitle(ctx context.Context, title string) (*models.Genr
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, &dberrors.NotFoundError{}
 		}
+		return nil, result.Error
 	}
 	return genre, nil
 }

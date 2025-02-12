@@ -44,6 +44,7 @@ type Server interface {
 
 	// Admin Book CRUD
 	GetAllBooks(ctx echo.Context) error
+	CreateBook(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -99,5 +100,6 @@ func (s *EchoServer) registerRoutes() {
 	// Admin Books
 	adminBookGroup := adminGroup.Group("/books")
 	adminBookGroup.GET("", s.GetAllBooks)
+	adminBookGroup.POST("", s.CreateBook)
 
 }

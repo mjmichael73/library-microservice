@@ -24,6 +24,8 @@ type DatabaseClient interface {
 
 	// Books
 	GetAllBooks(ctx context.Context, title string) ([]models.Book, error)
+	GetBookByTitle(ctx context.Context, title string) (*models.Book, error)
+	CreateBook(ctx context.Context, book *models.Book) (*models.Book, error)
 }
 
 type Client struct {
