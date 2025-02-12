@@ -38,14 +38,17 @@ type Server interface {
 	// Admin Genre CRUD
 	GetAllGenres(ctx echo.Context) error
 	CreateGenre(ctx echo.Context) error
+	GetGenreById(ctx echo.Context) error
 
 	// Admin Author CRUD
 	GetAllAuthors(ctx echo.Context) error
 	CreateAuthor(ctx echo.Context) error
+	GetAuthorById(ctx echo.Context) error
 
 	// Admin Book CRUD
 	GetAllBooks(ctx echo.Context) error
 	CreateBook(ctx echo.Context) error
+	GetBookById(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -93,15 +96,18 @@ func (s *EchoServer) registerRoutes() {
 	adminGenreGroup := adminGroup.Group("/genres")
 	adminGenreGroup.GET("", s.GetAllGenres)
 	adminGenreGroup.POST("", s.CreateGenre)
+	adminGenreGroup.GET("/:id", s.GetGenreById)
 
 	// Admin Authors
 	adminAuthorGroup := adminGroup.Group("/authors")
 	adminAuthorGroup.GET("", s.GetAllAuthors)
 	adminAuthorGroup.POST("", s.CreateAuthor)
+	adminAuthorGroup.GET("/:id", s.GetAuthorById)
 
 	// Admin Books
 	adminBookGroup := adminGroup.Group("/books")
 	adminBookGroup.GET("", s.GetAllBooks)
 	adminBookGroup.POST("", s.CreateBook)
+	adminBookGroup.GET("/:id", s.GetBookById)
 
 }

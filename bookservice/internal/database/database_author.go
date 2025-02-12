@@ -24,7 +24,7 @@ func (c Client) GetAuthorByName(ctx context.Context, name string) (*models.Autho
 		}
 		return nil, result.Error
 	}
-	return author, result.Error
+	return author, nil
 }
 
 func (c Client) CreateAuthor(ctx context.Context, author *models.Author) (*models.Author, error) {
@@ -34,6 +34,17 @@ func (c Client) CreateAuthor(ctx context.Context, author *models.Author) (*model
 			return nil, &dberrors.ConflictError{}
 		}
 		return nil, result.Error
+	}
+	return author, nil
+}
+
+func (c Client) GetAuthorById(ctx context.Context, ID string) (*models.Author, error) {
+	author := &models.Author{}
+	result := c.DB.WithContext(ctx).Where(models.Author{AuthorID: ID}).First(&author)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, result.Error
+		}
 	}
 	return author, nil
 }

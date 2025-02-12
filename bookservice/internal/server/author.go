@@ -71,3 +71,24 @@ func (s *EchoServer) CreateAuthor(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
 }
+
+func (s *EchoServer) GetAuthorById(ctx echo.Context) error {
+	ID := ctx.Param("id")
+	author, err := s.DB.GetAuthorById(ctx.Request().Context(), ID)
+	if err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{
+				"status":  "Failed",
+				"message": "Author not found",
+			})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, err)
+		}
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Author received successfully.",
+		"data":    author,
+	})
+}

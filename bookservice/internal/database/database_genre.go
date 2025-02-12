@@ -37,3 +37,14 @@ func (c Client) CreateGenre(ctx context.Context, genre *models.Genre) (*models.G
 	}
 	return genre, nil
 }
+
+func (c Client) GetGenreById(ctx context.Context, ID string) (*models.Genre, error) {
+	genre := &models.Genre{}
+	result := c.DB.WithContext(ctx).Where(models.Genre{GenreID: ID}).First(&genre)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, result.Error
+		}
+	}
+	return genre, nil
+}

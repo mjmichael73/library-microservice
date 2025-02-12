@@ -39,3 +39,14 @@ func (c Client) CreateBook(ctx context.Context, book *models.Book) (*models.Book
 	}
 	return book, nil
 }
+
+func (c Client) GetBookById(ctx context.Context, ID string) (*models.Book, error) {
+	book := &models.Book{}
+	result := c.DB.WithContext(ctx).Where(models.Book{BookID: ID}).First(&book)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, result.Error
+		}
+	}
+	return book, nil
+}

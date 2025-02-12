@@ -18,16 +18,19 @@ type DatabaseClient interface {
 	GetAllGenres(ctx context.Context, title string) ([]models.Genre, error)
 	GetGenreByTitle(ctx context.Context, title string) (*models.Genre, error)
 	CreateGenre(ctx context.Context, genre *models.Genre) (*models.Genre, error)
+	GetGenreById(ctx context.Context, ID string) (*models.Genre, error)
 
 	// Authors
 	GetAllAuthors(ctx context.Context, name string) ([]models.Author, error)
 	GetAuthorByName(ctx context.Context, name string) (*models.Author, error)
 	CreateAuthor(ctx context.Context, author *models.Author) (*models.Author, error)
+	GetAuthorById(ctx context.Context, ID string) (*models.Author, error)
 
 	// Books
 	GetAllBooks(ctx context.Context, title string) ([]models.Book, error)
 	GetBookByTitle(ctx context.Context, title string) (*models.Book, error)
 	CreateBook(ctx context.Context, book *models.Book) (*models.Book, error)
+	GetBookById(ctx context.Context, ID string) (*models.Book, error)
 }
 
 type Client struct {

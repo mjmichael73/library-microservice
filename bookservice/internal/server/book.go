@@ -76,3 +76,25 @@ func (s *EchoServer) CreateBook(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
 }
+
+
+func (s *EchoServer) GetBookById(ctx echo.Context) error {
+	ID := ctx.Param("id")
+	book, err := s.DB.GetBookById(ctx.Request().Context(), ID)
+	if err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{
+				"status":  "Failed",
+				"message": "Book not found",
+			})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, err)
+		}
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Book received successfully.",
+		"data":    book,
+	})
+}

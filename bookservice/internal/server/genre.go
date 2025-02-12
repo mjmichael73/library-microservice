@@ -65,3 +65,24 @@ func (s *EchoServer) CreateGenre(ctx echo.Context) error {
 
 	}
 }
+
+func (s *EchoServer) GetGenreById(ctx echo.Context) error {
+	ID := ctx.Param("id")
+	genre, err := s.DB.GetGenreById(ctx.Request().Context(), ID)
+	if err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{
+				"status":  "Failed",
+				"message": "Genre not found",
+			})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, err)
+		}
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Genre received successfully.",
+		"data":    genre,
+	})
+}
