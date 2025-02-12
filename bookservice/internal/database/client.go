@@ -21,6 +21,9 @@ type DatabaseClient interface {
 
 	// Authors
 	GetAllAuthors(ctx context.Context, name string) ([]models.Author, error)
+
+	// Books
+	GetAllBooks(ctx context.Context, title string) ([]models.Book, error)
 }
 
 type Client struct {
