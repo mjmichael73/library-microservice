@@ -45,6 +45,7 @@ type Server interface {
 	CreateAuthor(ctx echo.Context) error
 	GetAuthorById(ctx echo.Context) error
 	UpdateAuthor(ctx echo.Context) error
+	DeleteAuthor(ctx echo.Context) error
 
 	// Admin Book CRUD
 	GetAllBooks(ctx echo.Context) error
@@ -105,6 +106,7 @@ func (s *EchoServer) registerRoutes() {
 	adminAuthorGroup.POST("", s.CreateAuthor)
 	adminAuthorGroup.GET("/:id", s.GetAuthorById)
 	adminAuthorGroup.PUT("/:id", s.UpdateAuthor)
+	adminAuthorGroup.DELETE("/:id", s.DeleteAuthor)
 
 	// Admin Books
 	adminBookGroup := adminGroup.Group("/books")
