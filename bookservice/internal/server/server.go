@@ -41,6 +41,7 @@ type Server interface {
 
 	// Admin Author CRUD
 	GetAllAuthors(ctx echo.Context) error
+	CreateAuthor(ctx echo.Context) error
 
 	// Admin Book CRUD
 	GetAllBooks(ctx echo.Context) error
@@ -96,6 +97,7 @@ func (s *EchoServer) registerRoutes() {
 	// Admin Authors
 	adminAuthorGroup := adminGroup.Group("/authors")
 	adminAuthorGroup.GET("", s.GetAllAuthors)
+	adminAuthorGroup.POST("", s.CreateAuthor)
 
 	// Admin Books
 	adminBookGroup := adminGroup.Group("/books")

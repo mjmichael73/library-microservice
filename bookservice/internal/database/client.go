@@ -21,6 +21,8 @@ type DatabaseClient interface {
 
 	// Authors
 	GetAllAuthors(ctx context.Context, name string) ([]models.Author, error)
+	GetAuthorByName(ctx context.Context, name string) (*models.Author, error)
+	CreateAuthor(ctx context.Context, author *models.Author) (*models.Author, error)
 
 	// Books
 	GetAllBooks(ctx context.Context, title string) ([]models.Book, error)
