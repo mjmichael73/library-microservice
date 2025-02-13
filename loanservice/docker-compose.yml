@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:17.2-alpine
+    container_name: loanservice-db
+    ports:
+      - "54324:5432"
+    environment:
+      POSTGRES_DB: loanservice_db
+      POSTGRES_USER: loanservice_db_user
+      POSTGRES_PASSWORD: loanservice_db_password
+    volumes:
+      - loanservice_db_data:/var/lib/postgresql/data
+      - ./data:/data
+    networks:
+      - loanservice_net
+
+volumes:
+  loanservice_db_data:
+
+
+networks:
+  loanservice_net:
+    driver: bridge
