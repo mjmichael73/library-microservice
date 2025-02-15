@@ -33,6 +33,8 @@ type DatabaseClient interface {
 	GetBookByTitle(ctx context.Context, title string) (*models.Book, error)
 	CreateBook(ctx context.Context, book *models.Book) (*models.Book, error)
 	GetBookById(ctx context.Context, ID string) (*models.Book, error)
+	UpdateBook(ctx context.Context, book *models.Book) (*models.Book, error)
+	DeleteBook(ctx context.Context, ID string) error
 }
 
 type Client struct {

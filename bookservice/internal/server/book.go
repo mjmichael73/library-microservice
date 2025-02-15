@@ -77,7 +77,6 @@ func (s *EchoServer) CreateBook(ctx echo.Context) error {
 	}
 }
 
-
 func (s *EchoServer) GetBookById(ctx echo.Context) error {
 	ID := ctx.Param("id")
 	book, err := s.DB.GetBookById(ctx.Request().Context(), ID)
@@ -96,5 +95,68 @@ func (s *EchoServer) GetBookById(ctx echo.Context) error {
 		"status":  "Success",
 		"message": "Book received successfully.",
 		"data":    book,
+	})
+}
+
+func (s *EchoServer) UpdateBook(ctx echo.Context) error {
+	ID := ctx.Param("id")
+	book := new(models.Book)
+	if err := ctx.Bind(book); err != nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "Bad request",
+		})
+	}
+	if ID != book.BookID {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "Bad request, the id on path does not match the id in the body",
+		})
+	}
+	book, err := s.DB.UpdateBook(ctx.Request().Context(), book)
+	if err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{
+				"status":  "Failed",
+				"message": "Book not found",
+			})
+		case *dberrors.ConflictError:
+			return ctx.JSON(http.StatusBadRequest, echo.Map{
+				"status": "Failed",
+				"message": "The title of the book already exists.",
+			})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, echo.Map{
+				"status": "Failed",
+				"message": "Internal server error, please try again later.",
+			})
+		}
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status": "Success",
+		"message": "Book updated successfully.",
+		"data": book,
+	})
+
+}
+
+func (s *EchoServer) DeleteBook(ctx echo.Context) error {
+	ID := ctx.Param("id")
+	err := s.DB.DeleteBook(ctx.Request().Context(), ID)
+	if err != nil {
+		 switch err.(type) {
+		 case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{
+				"status": "Failed",
+				"message": "Book not found",
+			})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, err)
+		 }
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status": "Success",
+		"message": "Book has been deleted successfully.",
 	})
 }

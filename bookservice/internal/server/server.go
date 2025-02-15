@@ -51,6 +51,8 @@ type Server interface {
 	GetAllBooks(ctx echo.Context) error
 	CreateBook(ctx echo.Context) error
 	GetBookById(ctx echo.Context) error
+	UpdateBook(ctx echo.Context) error
+	DeleteBook(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -113,5 +115,7 @@ func (s *EchoServer) registerRoutes() {
 	adminBookGroup.GET("", s.GetAllBooks)
 	adminBookGroup.POST("", s.CreateBook)
 	adminBookGroup.GET("/:id", s.GetBookById)
+	adminBookGroup.PUT("/:id", s.UpdateBook)
+	adminBookGroup.DELETE("/:id", s.DeleteBook)
 
 }
