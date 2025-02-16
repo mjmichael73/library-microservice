@@ -1,8 +1,10 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -61,7 +63,11 @@ func NewEchoServer(db database.DatabaseClient) Server {
 }
 
 func (s *EchoServer) Start() error {
-	if err := s.echo.Start(":8080"); err != nil && err != http.ErrServerClosed {
+	appPort := os.Getenv("APP_PORT")
+	if appPort == "" {
+		return errors.New("APP_PORT is not set")
+	}
+	if err := s.echo.Start(":" + appPort); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server shutdown occurred: %s", err)
 		return err
 	}

@@ -1,17 +1,13 @@
-up:
-	@docker compose up -d
 down:
-	@docker compose down
-clean:
 	@docker compose down --remove-orphans --volumes
-	@docker compose up --build -d
+build:
+	@docker compose build
+up: build
+	@docker compose up -d
+clean: down build up
+	@sleep 3
+	@docker compose exec -it db sh -c "psql -h localhost -U userservice_db_user -d userservice_db -f /data/schema.sql"
 ps:
 	@docker compose ps
-dbexec:
-	@docker compose exec -it db bash
-dbpsql:
-	@docker compose exec -it db sh -c "psql -h localhost -U userservice_db_user -d userservice_db"
-dbschema:
-	@docker compose exec -it db sh -c "psql -h localhost -U userservice_db_user -d userservice_db -f /data/schema.sql"
-run:
-	@go run main.go
+run: up
+	@docker compose exec -it app sh -c "go build -o main . && ./main"
