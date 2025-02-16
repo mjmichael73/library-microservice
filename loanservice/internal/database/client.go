@@ -1,9 +1,11 @@
 package database
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"github.com/mjmichael73/library-microservice/loanservice/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -11,6 +13,8 @@ import (
 
 type DatabaseClient interface {
 	Ready() bool
+
+	CreateBorrow(ctx context.Context, borrow *models.Borrow) (*models.Borrow, error)
 }
 
 type Client struct {

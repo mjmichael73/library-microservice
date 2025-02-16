@@ -34,6 +34,8 @@ type Server interface {
 
 	Readiness(ctx echo.Context) error
 	Liveness(ctx echo.Context) error
+
+	CreateBorrow(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -74,4 +76,6 @@ func (s *EchoServer) Liveness(ctx echo.Context) error {
 func (s *EchoServer) registerRoutes() {
 	s.echo.GET("/readiness", s.Readiness)
 	s.echo.GET("/liveness", s.Liveness)
+
+	s.echo.POST("/borrow", s.CreateBorrow)
 }
