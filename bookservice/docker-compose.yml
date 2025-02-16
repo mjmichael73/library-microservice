@@ -1,13 +1,26 @@
 services:
+  app:
+    build: .
+    container_name: bookservice-app
+    ports:
+      - "$APP_PORT:8081"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - bookservice_net
   db:
     image: postgres:17.2-alpine
     container_name: bookservice-db
     ports:
       - "54323:5432"
     environment:
-      POSTGRES_DB: bookservice_db
-      POSTGRES_USER: bookservice_db_user
-      POSTGRES_PASSWORD: bookservice_db_password
+      POSTGRES_DB: $DB_NAME
+      POSTGRES_USER: $DB_USER
+      POSTGRES_PASSWORD: $DB_PASS
     volumes:
       - bookservice_db_data:/var/lib/postgresql/data
       - ./data:/data

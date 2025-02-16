@@ -1,19 +1,14 @@
-up:
-	@docker compose up -d
 down:
-	@docker compose down
-clean:
 	@docker compose down --remove-orphans --volumes
-	@docker compose up --build -d
+build:
+	@docker compose build
+up: build
+	@docker compose up -d
+clean: down build up
+	@sleep 3
+	@docker compose exec -it db sh -c "psql -h localhost -U bookservice_db_user -d bookservice_db -f /data/schema.sql"
+	@docker compose exec -it db sh -c "psql -h localhost -U bookservice_db_user -d bookservice_db -f /data/seed.sql"
 ps:
 	@docker compose ps
-dbexec:
-	@docker compose exec -it db bash
-dbpsql:
-	@docker compose exec -it db sh -c "psql -h localhost -U bookservice_db_user -d bookservice_db"
-dbschema:
-	@docker compose exec -it db sh -c "psql -h localhost -U bookservice_db_user -d bookservice_db -f /data/schema.sql"
-dbseed:
-	@docker compose exec -it db sh -c "psql -h localhost -U bookservice_db_user -d bookservice_db -f /data/seed.sql"
-run:
-	@go run main.go
+run: up
+	@docker compose exec -it app sh -c "go build -o main . && ./main"

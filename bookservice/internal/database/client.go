@@ -2,7 +2,10 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/mjmichael73/library-microservice/bookservice/internal/models"
@@ -42,10 +45,28 @@ type Client struct {
 }
 
 func NewDatabaseClient() (DatabaseClient, error) {
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", "localhost", 54323, "bookservice_db_user", "bookservice_db_password", "bookservice_db", "disable")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbTablePrefix := os.Getenv("DB_TABLE_PREFIX")
+
+	fmt.Println(dbHost, dbPort, dbName, dbUser, dbPass, dbTablePrefix)
+
+	if dbHost == "" || dbPort == "" || dbName == "" || dbUser == "" || dbPass == "" || dbTablePrefix == "" {
+		return nil, errors.New("one or more required environment variables are not set")
+	}
+
+	dbPortInt, err := strconv.Atoi(dbPort)
+	if err != nil {
+		return nil, fmt.Errorf("invalid DB_PORT value : %s", dbPort)
+	}
+
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", dbHost, dbPortInt, dbUser, dbPass, dbName, "disable")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix: "bookservice.",
+			TablePrefix: dbTablePrefix,
 		},
 		NowFunc: func() time.Time {
 			return time.Now().UTC()
