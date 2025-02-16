@@ -17,6 +17,7 @@ import (
 type DatabaseClient interface {
 	Ready() bool
 
+	GetActiveBorrowByUserIdAndBookId(ctx context.Context, bookId string, userId string) (*models.Borrow, error)
 	CreateBorrow(ctx context.Context, borrow *models.Borrow) (*models.Borrow, error)
 }
 

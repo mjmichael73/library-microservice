@@ -55,6 +55,8 @@ type Server interface {
 	GetBookById(ctx echo.Context) error
 	UpdateBook(ctx echo.Context) error
 	DeleteBook(ctx echo.Context) error
+
+	IsBookAvailableToBorrow(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -123,5 +125,7 @@ func (s *EchoServer) registerRoutes() {
 	adminBookGroup.GET("/:id", s.GetBookById)
 	adminBookGroup.PUT("/:id", s.UpdateBook)
 	adminBookGroup.DELETE("/:id", s.DeleteBook)
+
+	s.echo.GET("/isbookavailabletoboroow/:id", s.IsBookAvailableToBorrow)
 
 }

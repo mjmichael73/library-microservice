@@ -123,20 +123,20 @@ func (s *EchoServer) UpdateBook(ctx echo.Context) error {
 			})
 		case *dberrors.ConflictError:
 			return ctx.JSON(http.StatusBadRequest, echo.Map{
-				"status": "Failed",
+				"status":  "Failed",
 				"message": "The title of the book already exists.",
 			})
 		default:
 			return ctx.JSON(http.StatusInternalServerError, echo.Map{
-				"status": "Failed",
+				"status":  "Failed",
 				"message": "Internal server error, please try again later.",
 			})
 		}
 	}
 	return ctx.JSON(http.StatusOK, echo.Map{
-		"status": "Success",
+		"status":  "Success",
 		"message": "Book updated successfully.",
-		"data": book,
+		"data":    book,
 	})
 
 }
@@ -145,18 +145,34 @@ func (s *EchoServer) DeleteBook(ctx echo.Context) error {
 	ID := ctx.Param("id")
 	err := s.DB.DeleteBook(ctx.Request().Context(), ID)
 	if err != nil {
-		 switch err.(type) {
-		 case *dberrors.NotFoundError:
+		switch err.(type) {
+		case *dberrors.NotFoundError:
 			return ctx.JSON(http.StatusNotFound, echo.Map{
-				"status": "Failed",
+				"status":  "Failed",
 				"message": "Book not found",
 			})
 		default:
 			return ctx.JSON(http.StatusInternalServerError, err)
-		 }
+		}
 	}
 	return ctx.JSON(http.StatusOK, echo.Map{
-		"status": "Success",
+		"status":  "Success",
 		"message": "Book has been deleted successfully.",
+	})
+}
+
+func (s *EchoServer) IsBookAvailableToBorrow(ctx echo.Context) error {
+	ID := ctx.Param("id")
+	book, err := s.DB.GetBookById(ctx.Request().Context(), ID)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, echo.Map{
+			"status":  "Failed",
+			"message": "Book is not available to borrow.",
+		})
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Book is available to borrow",
+		"data":    book,
 	})
 }
