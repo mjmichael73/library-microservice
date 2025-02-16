@@ -17,13 +17,13 @@ services:
     build: ./userservice
     container_name: $USERSERVICE_APP_HOST
     ports:
-      - "$USERSERVICE_APP_PORT:8081"
+      - "$USERSERVICE_APP_PORT:8080"
     depends_on:
       - userservice-db
     env_file:
       - .env
     volumes:
-      - .:/app
+      - ./userservice:/app
     networks:
       - library_microservice_net
   bookservice-db:
@@ -50,7 +50,7 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app
+      - ./bookservice:/app
     networks:
       - library_microservice_net
   loanservice-db:
@@ -71,13 +71,13 @@ services:
     build: ./loanservice
     container_name: $LOANSERVICE_APP_HOST
     ports:
-      - "$LOANSERVICE_APP_PORT:8081"
+      - "$LOANSERVICE_APP_PORT:8082"
     depends_on:
       - loanservice-db
     env_file:
       - .env
     volumes:
-      - .:/app
+      - ./loanservice:/app
     networks:
       - library_microservice_net
   zookeeper:

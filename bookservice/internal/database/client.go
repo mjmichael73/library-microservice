@@ -45,12 +45,12 @@ type Client struct {
 }
 
 func NewDatabaseClient() (DatabaseClient, error) {
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("DB_NAME")
-	dbUser := os.Getenv("DB_USER")
-	dbPass := os.Getenv("DB_PASS")
-	dbTablePrefix := os.Getenv("DB_TABLE_PREFIX")
+	dbHost := os.Getenv("BOOKSERVICE_DB_HOST")
+	dbPort := os.Getenv("BOOKSERVICE_DB_INTERNAL_PORT")
+	dbName := os.Getenv("BOOKSERVICE_DB_NAME")
+	dbUser := os.Getenv("BOOKSERVICE_DB_USER")
+	dbPass := os.Getenv("BOOKSERVICE_DB_PASS")
+	dbTablePrefix := os.Getenv("BOOKSERVICE_DB_TABLE_PREFIX")
 
 	fmt.Println(dbHost, dbPort, dbName, dbUser, dbPass, dbTablePrefix)
 

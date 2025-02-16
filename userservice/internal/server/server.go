@@ -63,7 +63,7 @@ func NewEchoServer(db database.DatabaseClient) Server {
 }
 
 func (s *EchoServer) Start() error {
-	appPort := os.Getenv("APP_PORT")
+	appPort := os.Getenv("USERSERVICE_APP_PORT")
 	if appPort == "" {
 		return errors.New("APP_PORT is not set")
 	}
