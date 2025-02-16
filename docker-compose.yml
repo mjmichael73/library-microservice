@@ -1,11 +1,94 @@
 services:
+  userservice-db:
+    image: postgres:17.2-alpine
+    container_name: $USERSERVICE_DB_HOST
+    ports:
+      - "$USERSERVICE_DB_EXTERNAL_PORT:5432"
+    environment:
+      POSTGRES_DB: $USERSERVICE_DB_NAME
+      POSTGRES_USER: $USERSERVICE_DB_USER
+      POSTGRES_PASSWORD: $USERSERVICE_DB_PASS
+    volumes:
+      - userservice_db_data:/var/lib/postgresql/data
+      - ./userservice/data:/data
+    networks:
+      - library_microservice_net
+  userservice-app:
+    build: ./userservice
+    container_name: $USERSERVICE_APP_HOST
+    ports:
+      - "$USERSERVICE_APP_PORT:8081"
+    depends_on:
+      - userservice-db
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - library_microservice_net
+  bookservice-db:
+    image: postgres:17.2-alpine
+    container_name: $BOOKSERVICE_DB_HOST
+    ports:
+      - "$BOOKSERVICE_DB_EXTERNAL_PORT:5432"
+    environment:
+      POSTGRES_DB: $BOOKSERVICE_DB_NAME
+      POSTGRES_USER: $BOOKSERVICE_DB_USER
+      POSTGRES_PASSWORD: $BOOKSERVICE_DB_PASS
+    volumes:
+      - bookservice_db_data:/var/lib/postgresql/data
+      - ./bookservice/data:/data
+    networks:
+      - library_microservice_net
+  bookservice-app:
+    build: ./bookservice
+    container_name: $BOOKSERVICE_APP_HOST
+    ports:
+      - "$BOOKSERVICE_APP_PORT:8081"
+    depends_on:
+      - bookservice-db
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - library_microservice_net
+  loanservice-db:
+    image: postgres:17.2-alpine
+    container_name: $LOANSERVICE_DB_HOST
+    ports:
+      - "$LOANSERVICE_DB_EXTERNAL_PORT:5432"
+    environment:
+      POSTGRES_DB: $LOANSERVICE_DB_NAME
+      POSTGRES_USER: $LOANSERVICE_DB_USER
+      POSTGRES_PASSWORD: $LOANSERVICE_DB_PASS
+    volumes:
+      - loanservice_db_data:/var/lib/postgresql/data
+      - ./loanservice/data:/data
+    networks:
+      - library_microservice_net
+  loanservice-app:
+    build: ./loanservice
+    container_name: $LOANSERVICE_APP_HOST
+    ports:
+      - "$LOANSERVICE_APP_PORT:8081"
+    depends_on:
+      - loanservice-db
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - library_microservice_net
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.2
     container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-  
+    networks:
+      - library_microservice_net
+
   broker:
     image: confluentinc/cp-kafka:7.3.2
     container_name: broker
@@ -21,3 +104,15 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      - library_microservice_net
+
+volumes:
+  bookservice_db_data:
+  userservice_db_data:
+  loanservice_db_data:
+
+
+networks:
+  library_microservice_net:
+    driver: bridge
