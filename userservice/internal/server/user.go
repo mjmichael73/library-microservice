@@ -133,6 +133,7 @@ func (s *EchoServer) LoginUser(ctx echo.Context) error {
 		})
 	}
 	loginResponse := models.LoginResponse{
+		UserID:    user.UserID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Email:     user.Email,

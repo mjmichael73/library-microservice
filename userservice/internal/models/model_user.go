@@ -17,6 +17,7 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
+	UserID    string `json:"user_id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
@@ -29,6 +30,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
+	UserID    string `json:"user_id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
