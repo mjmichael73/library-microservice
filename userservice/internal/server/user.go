@@ -138,6 +138,7 @@ func (s *EchoServer) LoginUser(ctx echo.Context) error {
 		LastName:  user.LastName,
 		Email:     user.Email,
 		Token:     tokenString,
+		IsAdmin:   user.IsAdmin,
 	}
 	return ctx.JSON(http.StatusOK, echo.Map{
 		"status":  "Success",

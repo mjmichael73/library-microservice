@@ -84,5 +84,5 @@ func (s *EchoServer) registerRoutes() {
 	s.echo.GET("/readiness", s.Readiness)
 	s.echo.GET("/liveness", s.Liveness)
 
-	s.echo.POST("/borrow", s.CreateBorrow)
+	s.echo.POST("/loan/borrow", s.CreateBorrow)
 }
