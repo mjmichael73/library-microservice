@@ -80,6 +80,17 @@ services:
       - ./loanservice:/app
     networks:
       - library_microservice_net
+  apigateway-app:
+    build: ./apigatewayservice
+    container_name: $APIGATEWAYSERVICE_APP_HOST
+    ports:
+      - "$APIGATEWAYSERVICE_APP_PORT:8084"
+    env_file:
+      - .env
+    volumes:
+      - ./apigatewayservice:/app
+    networks:
+      - library_microservice_net
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.2
     container_name: zookeeper
