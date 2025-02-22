@@ -27,6 +27,19 @@ func (s *EchoServer) CreateBorrow(ctx echo.Context) error {
 			"errors":  FormatValidationErrors(err),
 		})
 	}
+	if createBorrowRequest.ToDate.Before(time.Now().AddDate(0, 0, 1)) {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "to_date must be greather than today",
+		})
+	}
+	_, err := s.DB.GetActiveBorrowByUserIdAndBookId(ctx.Request().Context(), createBorrowRequest.BookID, createBorrowRequest.UserID)
+	if err == nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "You have an active borrow of this book.",
+		})
+	}
 	bookId := createBorrowRequest.BookID
 	bookServiceAppHost := os.Getenv("BOOKSERVICE_APP_HOST")
 	if bookServiceAppHost == "" {
@@ -70,16 +83,15 @@ func (s *EchoServer) CreateBorrow(ctx echo.Context) error {
 		defer resp.Body.Close()
 	}
 	newBorrow := &models.Borrow{
-		BorrowID:     uuid.NewString(),
-		UserID:       createBorrowRequest.UserID,
-		BookID:       createBorrowRequest.BookID,
-		FromDate:     time.Now(),
-		ToDate:       time.Now(),
-		Status:       "active",
-		Remarks:      "Test",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-		ReturnedDate: time.Now(),
+		BorrowID:  uuid.NewString(),
+		UserID:    createBorrowRequest.UserID,
+		BookID:    createBorrowRequest.BookID,
+		FromDate:  createBorrowRequest.FromDate,
+		ToDate:    createBorrowRequest.ToDate,
+		Status:    "active",
+		Remarks:   createBorrowRequest.Remarks,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 	_, newErr := s.DB.CreateBorrow(ctx.Request().Context(), newBorrow)
 	if newErr != nil {

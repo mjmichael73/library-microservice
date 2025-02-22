@@ -16,11 +16,11 @@ type Borrow struct {
 }
 
 type CreateBorrowRequest struct {
-	UserID string `json:"user_id" validate:"required"`
-	BookID string `json:"book_id" validate:"required"`
-	// FromDate time.Time `json:"from_date" validate:"required"`
-	// ToDate   time.Time `json:"to_date" validate:"required"`
-	// Remarks  string    `json:"remarks" validate:"required"`
+	UserID   string    `json:"user_id" validate:"required"`
+	BookID   string    `json:"book_id" validate:"required"`
+	FromDate time.Time `json:"from_date" validate:"required"`
+	ToDate   time.Time `json:"to_date" validate:"required"`
+	Remarks  string    `json:"remarks" validate:"required"`
 }
 
 type CreateBorrowResponse struct {

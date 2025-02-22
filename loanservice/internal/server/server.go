@@ -50,7 +50,8 @@ func NewEchoServer(db database.DatabaseClient) Server {
 		echo: echo.New(),
 		DB:   db,
 	}
-	server.echo.Validator = &CustomValidator{validator: validator.New()}
+	v := validator.New()
+	server.echo.Validator = &CustomValidator{validator: v}
 	server.registerRoutes()
 	return server
 }
