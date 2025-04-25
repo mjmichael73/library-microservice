@@ -1,13 +1,14 @@
-FROM golang:1.23.4
+FROM golang:1.23.4-alpine as dependencies
 
 WORKDIR /app
-
 COPY go.mod go.sum ./
-
 RUN go mod download
 
-COPY . .
+FROM dependencies AS build
+COPY . ./
+RUN CGO_ENABLED=0 go build -o /main -ldflags="-w -s" .
 
-RUN go build -o main .
-
-CMD ["sleep", "infinity"]
+FROM golang:1.23.4-alpine
+COPY --from=build /main /main
+RUN sleep 15
+CMD ["/main"]
