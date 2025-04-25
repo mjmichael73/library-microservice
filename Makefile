@@ -12,11 +12,3 @@ up: build
 	@docker compose exec -it loanservice-db sh -c "psql -h localhost -U loanservice_db_user -d loanservice_db -f /data/schema.sql"
 ps:
 	@docker compose ps
-runUserService:
-	@docker compose exec -it userservice-app sh -c "go build -o main . && ./main"
-runBookService:
-	@docker compose exec -it bookservice-app sh -c "go build -o main . && ./main"
-runLoanService:
-	@docker compose exec -it loanservice-app sh -c "go build -o main . && ./main"
-runApi:
-	@docker compose exec -it apigateway-app sh -c "go build -o main . && ./main"
