@@ -10,6 +10,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/mjmichael73/library-microservice/apigatewayservice/internal/models"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Server interface {
@@ -116,6 +117,8 @@ func isAdminMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 func (s *EchoServer) registerRoutes() {
+	s.echo.Use(MetricsMiddleware)
+	s.echo.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 	s.echo.GET("/liveness", s.Liveness)
 
 	authGroup := s.echo.Group("/auth/")
@@ -124,9 +127,11 @@ func (s *EchoServer) registerRoutes() {
 	s.echo.GET("/user/is-admin", reverseProxy("http://userservice-app:8080"))
 	s.echo.GET("/user/validate-token", reverseProxy("http://userservice-app:8080"))
 
-	s.echo.Use(validateTokenMiddleware)
-	s.echo.Any("/loan/borrow", reverseProxy("http://loanservice-app:8082"))
+	protectedRoutes := s.echo.Group("/loan")
+	protectedRoutes.Use(validateTokenMiddleware)
+	protectedRoutes.Any("/borrow", reverseProxy("http://loanservice-app:8082"))
 
-	s.echo.Use(isAdminMiddleware)
-	s.echo.Any("/admin/*", reverseProxy("http://bookservice-app:8081"))
+	adminRoutes := s.echo.Group("/admin")
+	adminRoutes.Use(isAdminMiddleware)
+	adminRoutes.Any("/*", reverseProxy("http://bookservice-app:8081"))
 }
