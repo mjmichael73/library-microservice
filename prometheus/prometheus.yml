@@ -4,4 +4,16 @@ global:
 scrape_configs:
   - job_name: 'user_service'
     static_configs:
-      - targets: ['userservice-app:8080']  # or container name if using Docker
+      - targets: ['userservice-app:8080']
+  
+  - job_name: 'book_service'
+    static_configs:
+      - targets: ['bookservice-app:8081']
+  
+  - job_name: 'apigateway_service'
+    static_configs:
+      - targets: ['apigateway-app:8084']
+
+  - job_name: 'loan_service'
+    static_configs:
+      - targets: ['loanservice-app:8082']
