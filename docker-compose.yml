@@ -118,10 +118,31 @@ services:
     networks:
       - library_microservice_net
 
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - library_microservice_net
+    
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      - library_microservice_net
+
 volumes:
   bookservice_db_data:
   userservice_db_data:
   loanservice_db_data:
+  grafana-storage:
 
 
 networks:

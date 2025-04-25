@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/mjmichael73/library-microservice/userservice/internal/database"
 	"github.com/mjmichael73/library-microservice/userservice/internal/models"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type CustomValidator struct {
@@ -87,6 +88,8 @@ func (s *EchoServer) Liveness(ctx echo.Context) error {
 }
 
 func (s *EchoServer) registerRoutes() {
+	s.echo.Use(MetricsMiddleware)
+	s.echo.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 	s.echo.GET("/readiness", s.Readiness)
 	s.echo.GET("/liveness", s.Liveness)
 
