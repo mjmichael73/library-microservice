@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -73,6 +74,10 @@ func (s *EchoServer) RegisterUser(ctx echo.Context) error {
 			"message": "Registration was successful, please try to login later on.",
 			"data":    registerResponse,
 		})
+	}
+	err = s.KafkaProducer.SendMessage(ctx.Request().Context(), "user-registered-topic", []byte(resultUser.UserID), []byte(resultUser.Email))
+	if err != nil {
+		log.Printf("failed to send kafak message: %v", err)
 	}
 	registerResponse.Token = tokenString
 	return ctx.JSON(http.StatusCreated, echo.Map{

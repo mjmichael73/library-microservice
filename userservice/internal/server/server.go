@@ -54,6 +54,7 @@ type EchoServer struct {
 	echo   *echo.Echo
 	DB     database.DatabaseClient
 	closer io.Closer
+	KafkaProducer *KafkaProducer
 }
 
 func NewEchoServer(db database.DatabaseClient) Server {
@@ -67,6 +68,8 @@ func NewEchoServer(db database.DatabaseClient) Server {
 		log.Fatalf("Could not initialize tracer : %v", err)
 	}
 	server.closer = closer
+	kafkaProducer := NewKafkaProducer("broker:29092")
+	server.KafkaProducer = kafkaProducer
 	server.echo.Use(middleware.Logger())
 	server.echo.Use(middleware.Recover())
 	server.echo.Use(JaegerTracingMiddleware())
