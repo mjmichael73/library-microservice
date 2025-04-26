@@ -3,6 +3,7 @@ package server
 import (
 	"io"
 
+	"github.com/labstack/echo/v4"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
@@ -10,16 +11,21 @@ import (
 	"github.com/uber/jaeger-lib/metrics"
 )
 
-func (s *EchoServer) initJaeger(serviceName string) (io.Closer, error) {
+const (
+	JAEGER_SERVICE_NAME = "user-service"
+	JAEGER_HOST_PORT    = "jaeger:6831"
+)
+
+func (s *EchoServer) initJaeger() (io.Closer, error) {
 	cfg := jaegercfg.Configuration{
-		ServiceName: serviceName,
+		ServiceName: JAEGER_SERVICE_NAME,
 		Sampler: &jaegercfg.SamplerConfig{
 			Type:  jaeger.SamplerTypeConst,
 			Param: 1,
 		},
 		Reporter: &jaegercfg.ReporterConfig{
 			LogSpans:           true,
-			LocalAgentHostPort: "jaeger:6831",
+			LocalAgentHostPort: JAEGER_HOST_PORT,
 		},
 	}
 	jLogger := jaegerlog.StdLogger
@@ -34,4 +40,43 @@ func (s *EchoServer) initJaeger(serviceName string) (io.Closer, error) {
 	}
 	opentracing.SetGlobalTracer(tracer)
 	return closer, nil
+}
+
+func JaegerTracingMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			operationName := c.Request().Method + " " + c.Path()
+			tracer := opentracing.GlobalTracer()
+
+			wireContext, err := tracer.Extract(
+				opentracing.HTTPHeaders,
+				opentracing.HTTPHeadersCarrier(c.Request().Header),
+			)
+
+			var span opentracing.Span
+			if err != nil {
+				span = tracer.StartSpan(operationName)
+			} else {
+				span = tracer.StartSpan(operationName, opentracing.ChildOf(wireContext))
+			}
+			defer span.Finish()
+
+			span.SetTag("http.method", c.Request().Method)
+			span.SetTag("http.url", c.Request().RequestURI)
+			span.SetTag("component", JAEGER_SERVICE_NAME)
+
+			ctx := opentracing.ContextWithSpan(c.Request().Context(), span)
+			c.SetRequest(c.Request().WithContext(ctx))
+
+			err = next(c)
+
+			status := c.Response().Status
+			span.SetTag("http.status_code", status)
+			if status >= 500 {
+				span.SetTag("error", true)
+			}
+
+			return err
+		}
+	}
 }

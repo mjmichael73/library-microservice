@@ -12,12 +12,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/mjmichael73/library-microservice/loanservice/internal/database"
 	"github.com/mjmichael73/library-microservice/loanservice/internal/models"
-	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-)
-
-const (
-	JAEGER_SERVICE_NAME = "loan-service"
 )
 
 type CustomValidator struct {
@@ -62,31 +57,14 @@ func NewEchoServer(db database.DatabaseClient) Server {
 	v := validator.New()
 	server.echo.Validator = &CustomValidator{validator: v}
 
-	closer, err := server.initJaeger(JAEGER_SERVICE_NAME)
+	closer, err := server.initJaeger()
 	if err != nil {
 		log.Fatalf("Could not initialize tracer: %v", err)
 	}
 	server.closer = closer
 	server.echo.Use(middleware.Logger())
 	server.echo.Use(middleware.Recover())
-	server.echo.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			operationName := c.Request().Method + " " + c.Path()
-			span, ctx := opentracing.StartSpanFromContext(c.Request().Context(), operationName)
-			span.SetTag("http.method", c.Request().Method)
-			span.SetTag("http.url", c.Request().RequestURI)
-			span.SetTag("component", JAEGER_SERVICE_NAME)
-			c.SetRequest(c.Request().WithContext(ctx))
-			err = next(c)
-			status := c.Response().Status
-			span.SetTag("http.status_code", status)
-			if status >= 500 {
-				span.SetTag("error", true)
-			}
-			span.Finish()
-			return next(c)
-		}
-	})
+	server.echo.Use(JaegerTracingMiddleware())
 	server.registerRoutes()
 	return server
 }
