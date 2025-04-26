@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -9,9 +10,15 @@ import (
 	"github.com/go-playground/validator/v10"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/mjmichael73/library-microservice/userservice/internal/database"
 	"github.com/mjmichael73/library-microservice/userservice/internal/models"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+const (
+	JAEGER_SERVICE_NAME = "user-service"
 )
 
 type CustomValidator struct {
@@ -49,8 +56,9 @@ type Server interface {
 }
 
 type EchoServer struct {
-	echo *echo.Echo
-	DB   database.DatabaseClient
+	echo   *echo.Echo
+	DB     database.DatabaseClient
+	closer io.Closer
 }
 
 func NewEchoServer(db database.DatabaseClient) Server {
@@ -59,6 +67,56 @@ func NewEchoServer(db database.DatabaseClient) Server {
 		DB:   db,
 	}
 	server.echo.Validator = &CustomValidator{validator: validator.New()}
+	closer, err := server.initJaeger(JAEGER_SERVICE_NAME)
+	if err != nil {
+		log.Fatalf("Could not initialize tracer : %v", err)
+	}
+	server.closer = closer
+	server.echo.Use(middleware.Logger())
+	server.echo.Use(middleware.Recover())
+	server.echo.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			operationName := c.Request().Method + " " + c.Path()
+			tracer := opentracing.GlobalTracer()
+	
+			// Try to extract existing tracing context from incoming request
+			wireContext, err := tracer.Extract(
+				opentracing.HTTPHeaders,
+				opentracing.HTTPHeadersCarrier(c.Request().Header),
+			)
+	
+			var span opentracing.Span
+			if err != nil {
+				// Start a new root span if no context found
+				span = tracer.StartSpan(operationName)
+			} else {
+				// Continue the trace by creating a child span
+				span = tracer.StartSpan(operationName, opentracing.ChildOf(wireContext))
+			}
+			defer span.Finish()
+	
+			span.SetTag("http.method", c.Request().Method)
+			span.SetTag("http.url", c.Request().RequestURI)
+			span.SetTag("component", JAEGER_SERVICE_NAME)
+	
+			// Set the span into the request context
+			ctx := opentracing.ContextWithSpan(c.Request().Context(), span)
+			c.SetRequest(c.Request().WithContext(ctx))
+	
+			// Continue the middleware chain
+			err = next(c)
+	
+			// After next handler
+			status := c.Response().Status
+			span.SetTag("http.status_code", status)
+			if status >= 500 {
+				span.SetTag("error", true)
+			}
+	
+			return err
+		}
+	})
+	
 	server.registerRoutes()
 	return server
 }

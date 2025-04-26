@@ -2,15 +2,25 @@ package server
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 
+	"github.com/getsentry/sentry-go"
+	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/mjmichael73/library-microservice/apigatewayservice/internal/models"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+const (
+	JAEGER_SERVICE_NAME = "apigateway-service"
 )
 
 type Server interface {
@@ -20,13 +30,49 @@ type Server interface {
 }
 
 type EchoServer struct {
-	echo *echo.Echo
+	echo   *echo.Echo
+	closer io.Closer
 }
 
 func NewEchoServer() Server {
 	server := &EchoServer{
 		echo: echo.New(),
 	}
+
+	// Initialize Jaeger Tracer
+	closer, err := server.initJaeger(JAEGER_SERVICE_NAME)
+	if err != nil {
+		log.Fatalf("Could not initialize tracer: %v", err)
+	}
+	server.closer = closer
+
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn: "https://5ae33dfde257f10751bb7f085b115a40@o4504689622384640.ingest.us.sentry.io/4509215776047104",
+	}); err != nil {
+		fmt.Printf("Sentry initialization failed: %v\n", err)
+	}
+	server.echo.Use(middleware.Logger())
+	server.echo.Use(middleware.Recover())
+	server.echo.Use(sentryecho.New(sentryecho.Options{}))
+	// Use middleware
+	server.echo.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			operationName := c.Request().Method + " " + c.Path()
+			span, ctx := opentracing.StartSpanFromContext(c.Request().Context(), operationName)
+			span.SetTag("http.method", c.Request().Method)
+			span.SetTag("http.url", c.Request().RequestURI)
+			span.SetTag("component", JAEGER_SERVICE_NAME)
+			c.SetRequest(c.Request().WithContext(ctx))
+			err = next(c)
+			status := c.Response().Status
+			span.SetTag("http.status_code", status)
+			if status >= 500 {
+				span.SetTag("error", true)
+			}
+			span.Finish()
+			return next(c)
+		}
+	})
 	server.registerRoutes()
 	return server
 }
@@ -48,13 +94,23 @@ func (s *EchoServer) Liveness(ctx echo.Context) error {
 }
 
 func reverseProxy(target string) echo.HandlerFunc {
+	sentry.CaptureMessage("GO HERE " + target)
 	return func(c echo.Context) error {
 		targetURL, err := url.Parse(target)
 		if err != nil {
 			return err
 		}
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
-		proxy.ServeHTTP(c.Response().Writer, c.Request())
+		req := c.Request()
+		span := opentracing.SpanFromContext(req.Context())
+		if span != nil {
+			opentracing.GlobalTracer().Inject(
+				span.Context(),
+				opentracing.HTTPHeaders,
+				opentracing.HTTPHeadersCarrier(req.Header),
+			)
+		}
+		proxy.ServeHTTP(c.Response().Writer, req)
 		return nil
 	}
 }
