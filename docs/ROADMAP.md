@@ -208,9 +208,18 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-022 — No DB migrations / auto-migrate
 - **Severity:** P1
+- **Status:** Done
 - **Location:** all `client.go`
 - **Problem:** Schema applied manually; fresh DB fails at runtime.
 - **Fix:** Add `AutoMigrate` or golang-migrate with embedded SQL.
+- **Note:** `NewDatabaseClient` now runs `AutoMigrate` right after a successful
+  connection, returning an error if migration fails. `userservice` migrates
+  `models.User`; `bookservice` migrates `models.Book`, `models.Author`,
+  `models.Genre`, `models.BookAuthor`, `models.BookGenre`; `loanservice`
+  migrates `models.Borrow`. The configured table prefix is honoured.
+  `AutoMigrate` only adds tables/columns (no drops, renames, or FK constraints
+  — see R-024); a full migration tool would be the next step if strict schema
+  control is required.
 
 ### R-023 — Borrow authorization missing
 - **Severity:** P0

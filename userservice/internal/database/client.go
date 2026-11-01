@@ -55,6 +55,11 @@ func NewDatabaseClient() (DatabaseClient, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
+	}
+
 	client := Client{
 		DB: db,
 	}
