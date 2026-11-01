@@ -230,9 +230,18 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-024 — No foreign keys on borrows
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `loanservice/data/schema.sql`
 - **Problem:** `user_id`/`book_id` are untyped-ish UUIDs without FKs.
 - **Fix:** Add FK constraints (or enforce in app if cross-DB).
+- **Note:** Cross-database FKs are impossible here — users live in `userservice`
+  and books in `bookservice`, each with its own database, so a real FK cannot be
+  declared. Referential integrity is instead enforced at the application
+  boundary in `loanservice/internal/server/borrow.go` (R-019/R-023): the user is
+  validated against `userservice` and the book against `bookservice` before a
+  borrow row is written. `schema.sql` now marks `user_id`/`book_id` `NOT NULL`,
+  constrains `status` to `('active','returned','overdue')` via
+  `chk_borrows_status`, and keeps the existing indexes.
 
 ---
 
