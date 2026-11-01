@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -170,9 +171,55 @@ func (s *EchoServer) IsBookAvailableToBorrow(ctx echo.Context) error {
 			"message": "Book is not available to borrow.",
 		})
 	}
-	return ctx.JSON(http.StatusOK, echo.Map{
-		"status":  "Success",
-		"message": "Book is available to borrow",
-		"data":    book,
-	})
+
+	// A book row existing is not enough: it is only available if loanservice
+	// reports no active borrow for it (R-019).
+	loanServiceAppHost := os.Getenv("LOANSERVICE_APP_HOST")
+	loanServiceAppPort := os.Getenv("LOANSERVICE_APP_PORT")
+	if loanServiceAppHost == "" || loanServiceAppPort == "" {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"status":  "Failed",
+			"message": "Internal server error, please try again later.",
+		})
+	}
+
+	loanServiceUrl := "http://" + loanServiceAppHost + ":" + loanServiceAppPort + "/loan/active/" + ID
+	req, err := http.NewRequestWithContext(ctx.Request().Context(), http.MethodGet, loanServiceUrl, nil)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"status":  "Failed",
+			"message": "Internal server error, please try again later.",
+		})
+	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"status":  "Failed",
+			"message": "Internal server error, please try again later.",
+		})
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		// loanservice found one or more active borrows.
+		return ctx.JSON(http.StatusNotFound, echo.Map{
+			"status":  "Failed",
+			"message": "Book is not available to borrow.",
+		})
+	case http.StatusNotFound:
+		// No active borrow: the book is available.
+		return ctx.JSON(http.StatusOK, echo.Map{
+			"status":  "Success",
+			"message": "Book is available to borrow",
+			"data":    book,
+		})
+	default:
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"status":  "Failed",
+			"message": "Internal server error, please try again later.",
+		})
+	}
 }

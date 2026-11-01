@@ -17,8 +17,9 @@ import (
 )
 
 type mockBorrowDB struct {
-	activeBorrowFn func(context.Context, string, string) (*models.Borrow, error)
-	createFn       func(context.Context, *models.Borrow) (*models.Borrow, error)
+	activeBorrowFn  func(context.Context, string, string) (*models.Borrow, error)
+	activeBorrowsFn func(context.Context, string) ([]models.Borrow, error)
+	createFn        func(context.Context, *models.Borrow) (*models.Borrow, error)
 }
 
 func (m *mockBorrowDB) Ready() bool { return true }
@@ -26,6 +27,13 @@ func (m *mockBorrowDB) Ready() bool { return true }
 func (m *mockBorrowDB) GetActiveBorrowByUserIdAndBookId(ctx context.Context, bookId string, userId string) (*models.Borrow, error) {
 	if m.activeBorrowFn != nil {
 		return m.activeBorrowFn(ctx, bookId, userId)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockBorrowDB) GetActiveBorrowsByBookId(ctx context.Context, bookId string) ([]models.Borrow, error) {
+	if m.activeBorrowsFn != nil {
+		return m.activeBorrowsFn(ctx, bookId)
 	}
 	return nil, errors.New("not implemented")
 }

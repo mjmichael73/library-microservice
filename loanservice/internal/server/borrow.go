@@ -12,6 +12,31 @@ import (
 	"github.com/mjmichael73/library-microservice/loanservice/internal/models"
 )
 
+// GetActiveBorrowsByBookId reports whether a book currently has any active
+// borrow. It returns 200 with the borrows when at least one is active, and 404
+// when none are, so callers can treat a missing/available book uniformly.
+func (s *EchoServer) GetActiveBorrowsByBookId(ctx echo.Context) error {
+	bookId := ctx.Param("book_id")
+	borrows, err := s.DB.GetActiveBorrowsByBookId(ctx.Request().Context(), bookId)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"status":  "Failed",
+			"message": "Internal server error, please try again later.",
+		})
+	}
+	if len(borrows) == 0 {
+		return ctx.JSON(http.StatusNotFound, echo.Map{
+			"status":  "Failed",
+			"message": "Book is not borrowed.",
+		})
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Book is currently borrowed.",
+		"data":    borrows,
+	})
+}
+
 func (s *EchoServer) CreateBorrow(ctx echo.Context) error {
 	createBorrowRequest := new(models.CreateBorrowRequest)
 	if err := ctx.Bind(createBorrowRequest); err != nil {

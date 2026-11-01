@@ -41,6 +41,7 @@ type Server interface {
 	Liveness(ctx echo.Context) error
 
 	CreateBorrow(ctx echo.Context) error
+	GetActiveBorrowsByBookId(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -100,4 +101,5 @@ func (s *EchoServer) registerRoutes() {
 	s.echo.GET("/liveness", s.Liveness)
 
 	s.echo.POST("/loan/borrow", s.CreateBorrow)
+	s.echo.GET("/loan/active/:book_id", s.GetActiveBorrowsByBookId)
 }

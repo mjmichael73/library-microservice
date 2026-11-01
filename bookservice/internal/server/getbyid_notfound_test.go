@@ -18,6 +18,9 @@ import (
 type mockDatabaseClient struct {
 	err error
 
+	// book is returned by GetBookById when err is nil (R-019).
+	book *models.Book
+
 	// Author creation support (R-004). Zero values preserve the previous
 	// behaviour for the Get*ById tests.
 	authorByName    *models.Author
@@ -68,7 +71,13 @@ func (m *mockDatabaseClient) CreateBook(ctx context.Context, book *models.Book) 
 	return nil, nil
 }
 func (m *mockDatabaseClient) GetBookById(ctx context.Context, ID string) (*models.Book, error) {
-	return nil, m.err
+	if m.err != nil {
+		return nil, m.err
+	}
+	if m.book != nil {
+		return m.book, nil
+	}
+	return nil, nil
 }
 func (m *mockDatabaseClient) UpdateBook(ctx context.Context, book *models.Book) (*models.Book, error) {
 	return nil, nil

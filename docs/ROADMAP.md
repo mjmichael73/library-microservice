@@ -171,9 +171,20 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-019 — Availability check ignores active loans
 - **Severity:** P1
+- **Status:** Done
 - **Location:** `bookservice/internal/server/book.go:164-178`
 - **Problem:** Returns "available" whenever the book row exists.
 - **Fix:** Check loanservice for active borrows (or track copy counts).
+- **Note:** `loanservice` gained `GetActiveBorrowsByBookId`
+  (`internal/database/database_borrow.go`) and `GET /loan/active/:book_id`,
+  which returns 200 with the borrows when at least one is active and 404 when
+  none are. `IsBookAvailableToBorrow` now calls that endpoint (host/port from
+  `LOANSERVICE_APP_HOST`/`LOANSERVICE_APP_PORT`, 5s timeout) after confirming
+  the book row exists: an active borrow → 404 "Book is not available to borrow.",
+  none → 200 with the book, upstream error/missing config → 500. Covered by
+  `loanservice/internal/database/database_borrow_test.go`,
+  `loanservice/internal/server/active_borrows_r019_test.go`, and
+  `bookservice/internal/server/isbookavailable_r019_test.go`.
 
 ### R-020 — Inconsistent response envelopes
 - **Severity:** P2

@@ -97,3 +97,50 @@ func TestCreateBorrow_Duplicate_ReturnsConflict(t *testing.T) {
 		t.Errorf("unmet expectations: %v", err)
 	}
 }
+
+// TestGetActiveBorrowsByBookId_ReturnsRows covers R-019: the query filters by
+// book_id and active status and returns every matching borrow.
+func TestGetActiveBorrowsByBookId_ReturnsRows(t *testing.T) {
+	client, mock := newMockBorrowClient(t)
+
+	rows := sqlmock.NewRows([]string{"borrow_id", "user_id", "book_id", "status"}).
+		AddRow("borrow-1", "user-1", "book-1", "active")
+	mock.ExpectQuery(`SELECT \* FROM "borrows" WHERE "borrows"\."book_id" = \$1 AND "borrows"\."status" = \$2`).
+		WithArgs("book-1", "active").
+		WillReturnRows(rows)
+
+	got, err := client.GetActiveBorrowsByBookId(context.Background(), "book-1")
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected 1 borrow, got %d", len(got))
+	}
+	if got[0].BorrowID != "borrow-1" || got[0].UserID != "user-1" {
+		t.Errorf("unexpected borrow: %+v", got[0])
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unmet expectations: %v", err)
+	}
+}
+
+// TestGetActiveBorrowsByBookId_NoRows verifies an empty result set yields an
+// empty slice and no error, so the handler can treat the book as available.
+func TestGetActiveBorrowsByBookId_NoRows(t *testing.T) {
+	client, mock := newMockBorrowClient(t)
+
+	mock.ExpectQuery(`SELECT \* FROM "borrows" WHERE "borrows"\."book_id" = \$1 AND "borrows"\."status" = \$2`).
+		WithArgs("book-1", "active").
+		WillReturnRows(sqlmock.NewRows([]string{"borrow_id", "user_id", "book_id", "status"}))
+
+	got, err := client.GetActiveBorrowsByBookId(context.Background(), "book-1")
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("expected 0 borrows, got %d", len(got))
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unmet expectations: %v", err)
+	}
+}

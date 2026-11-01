@@ -19,6 +19,17 @@ func (c Client) GetActiveBorrowByUserIdAndBookId(ctx context.Context, bookId str
 	return borrow, result.Error
 }
 
+// GetActiveBorrowsByBookId returns every active borrow for a book. An empty
+// (non-nil) slice means the book has no active borrow, i.e. it is available.
+func (c Client) GetActiveBorrowsByBookId(ctx context.Context, bookId string) ([]models.Borrow, error) {
+	var borrows []models.Borrow
+	result := c.DB.WithContext(ctx).Where(models.Borrow{
+		BookID: bookId,
+		Status: "active",
+	}).Find(&borrows)
+	return borrows, result.Error
+}
+
 func (c Client) CreateBorrow(ctx context.Context, borrow *models.Borrow) (*models.Borrow, error) {
 	result := c.DB.WithContext(ctx).Create(&borrow)
 	if result.Error != nil {
