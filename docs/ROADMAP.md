@@ -100,6 +100,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-011 — `.env` committed with secrets
 - **Severity:** P0
+- **Status:** Done
 - **Location:** root `.gitignore`, `.env`
 - **Problem:** `.env` is tracked and contains passwords.
 - **Fix:** Add `.env` to `.gitignore`, `git rm --cached .env`, rotate credentials.
