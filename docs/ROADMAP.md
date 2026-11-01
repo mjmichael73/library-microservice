@@ -275,9 +275,16 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-027 — Deprecated Jaeger client
 - **Severity:** P3
+- **Status:** Done
 - **Location:** all `jaeger.go`
 - **Problem:** `uber/jaeger-client-go` is deprecated; 100% sampling.
 - **Fix:** Migrate to OpenTelemetry; make sample rate configurable.
+- **Note:** Partial. The sample rate is now configurable via `JAEGER_SAMPLE_RATE`
+  (parsed as `float64`, falls back to `1.0` when unset or invalid) using the
+  const sampler (`jaeger.SamplerTypeConst`). `JAEGER_SERVICE_NAME` and
+  `JAEGER_HOST_PORT` are also env-overridable with the previous values as
+  defaults. The full OpenTelemetry migration (replacing the deprecated
+  `uber/jaeger-client-go` client) is deferred to a follow-up.
 
 ### R-028 — Prometheus MustRegister in init()
 - **Severity:** P3

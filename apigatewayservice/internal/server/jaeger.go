@@ -2,6 +2,8 @@ package server
 
 import (
 	"io"
+	"os"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/opentracing/opentracing-go"
@@ -13,19 +15,52 @@ import (
 
 const (
 	JAEGER_SERVICE_NAME = "apigateway-service"
-	JAEGER_HOST_PORT = "jaeger:6831"
+	JAEGER_HOST_PORT    = "jaeger:6831"
+	JAEGER_SAMPLE_RATE  = 1.0
 )
+
+// jaegerServiceName returns the JAEGER_SERVICE_NAME env override, falling back
+// to the built-in default when unset.
+func jaegerServiceName() string {
+	if v := os.Getenv("JAEGER_SERVICE_NAME"); v != "" {
+		return v
+	}
+	return JAEGER_SERVICE_NAME
+}
+
+// jaegerHostPort returns the JAEGER_HOST_PORT env override, falling back to the
+// built-in default when unset.
+func jaegerHostPort() string {
+	if v := os.Getenv("JAEGER_HOST_PORT"); v != "" {
+		return v
+	}
+	return JAEGER_HOST_PORT
+}
+
+// jaegerSampleRate returns the JAEGER_SAMPLE_RATE env override parsed as a
+// float64, falling back to the default of 1.0 when unset or invalid.
+func jaegerSampleRate() float64 {
+	v := os.Getenv("JAEGER_SAMPLE_RATE")
+	if v == "" {
+		return JAEGER_SAMPLE_RATE
+	}
+	rate, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		return JAEGER_SAMPLE_RATE
+	}
+	return rate
+}
 
 func (s *EchoServer) initJaeger() (io.Closer, error) {
 	cfg := jaegercfg.Configuration{
-		ServiceName: JAEGER_SERVICE_NAME,
+		ServiceName: jaegerServiceName(),
 		Sampler: &jaegercfg.SamplerConfig{
 			Type:  jaeger.SamplerTypeConst,
-			Param: 1,
+			Param: jaegerSampleRate(),
 		},
 		Reporter: &jaegercfg.ReporterConfig{
 			LogSpans:           true,
-			LocalAgentHostPort: JAEGER_HOST_PORT,
+			LocalAgentHostPort: jaegerHostPort(),
 		},
 	}
 	jLogger := jaegerlog.StdLogger
@@ -63,7 +98,7 @@ func JaegerTracingMiddleware() echo.MiddlewareFunc {
 
 			span.SetTag("http.method", c.Request().Method)
 			span.SetTag("http.url", c.Request().RequestURI)
-			span.SetTag("component", JAEGER_SERVICE_NAME)
+			span.SetTag("component", jaegerServiceName())
 
 			ctx := opentracing.ContextWithSpan(c.Request().Context(), span)
 			c.SetRequest(c.Request().WithContext(ctx))
