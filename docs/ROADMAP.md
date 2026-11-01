@@ -288,9 +288,15 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-028 — Prometheus MustRegister in init()
 - **Severity:** P3
+- **Status:** Done
 - **Location:** all `metrics.go:63`
 - **Problem:** Panics on duplicate registration (blocks in-process tests).
 - **Fix:** Use `prometheus.Register` with duplicate handling or a sync.Once.
+- **Note:** `init()` in all four services (`userservice`, `bookservice`,
+  `loanservice`, `apigatewayservice`) now loops over the collectors and calls
+  `prometheus.Register`, tolerating `*prometheus.AlreadyRegisteredError` via
+  `errors.As` and panicking only on any other registration error, so a duplicate
+  registration (e.g. in-process tests) no longer blocks startup.
 
 ---
 

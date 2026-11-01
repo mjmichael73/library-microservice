@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -61,7 +62,14 @@ var (
 )
 
 func init() {
-	prometheus.MustRegister(httpRequests, httpDuration, inFlightGauge, requestSize, responseSize, appErrors)
+	for _, c := range []prometheus.Collector{httpRequests, httpDuration, inFlightGauge, requestSize, responseSize, appErrors} {
+		if err := prometheus.Register(c); err != nil {
+			var are *prometheus.AlreadyRegisteredError
+			if !errors.As(err, &are) {
+				panic(err)
+			}
+		}
+	}
 }
 
 func MetricsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
