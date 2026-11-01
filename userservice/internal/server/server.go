@@ -74,7 +74,11 @@ func NewEchoServer(db database.DatabaseClient) Server {
 		log.Fatalf("Could not initialize tracer : %v", err)
 	}
 	server.closer = closer
-	kafkaProducer := NewKafkaProducer("broker:29092")
+	kafkaBroker := os.Getenv("KAFKA_BROKER")
+	if kafkaBroker == "" {
+		kafkaBroker = "broker:29092"
+	}
+	kafkaProducer := NewKafkaProducer(kafkaBroker)
 	server.KafkaProducer = kafkaProducer
 	server.echo.Use(middleware.Logger())
 	server.echo.Use(middleware.Recover())

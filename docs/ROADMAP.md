@@ -114,6 +114,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-013 — Hardcoded Kafka broker
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `userservice/internal/server/server.go:71`
 - **Problem:** `"broker:29092"` not configurable.
 - **Fix:** Read `KAFKA_BROKER` env var with default.
