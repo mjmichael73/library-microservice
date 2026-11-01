@@ -44,8 +44,12 @@ func (c Client) GetAuthorById(ctx context.Context, ID string) (*models.Author, e
 	result := c.DB.WithContext(ctx).Where(models.Author{AuthorID: ID}).First(&author)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, result.Error
+			return nil, &dberrors.NotFoundError{
+				Entity: "author",
+				ID:     ID,
+			}
 		}
+		return nil, result.Error
 	}
 	return author, nil
 }

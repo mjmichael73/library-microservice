@@ -17,6 +17,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-002 — Missing records return 500 instead of 404
 - **Severity:** P0
+- **Status:** Done
 - **Location:** `bookservice/internal/database/database_book.go:45`, `database_author.go:42`, `database_genre.go:41`
 - **Problem:** `GetBookById`/`GetAuthorById`/`GetGenreById` return raw `gorm.ErrRecordNotFound`; handlers expect `*dberrors.NotFoundError`.
 - **Fix:** Wrap in `&dberrors.NotFoundError{Entity, ID}` like `GetBookByTitle`.

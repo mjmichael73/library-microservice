@@ -47,8 +47,12 @@ func (c Client) GetBookById(ctx context.Context, ID string) (*models.Book, error
 	result := c.DB.WithContext(ctx).Where(models.Book{BookID: ID}).First(&book)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, result.Error
+			return nil, &dberrors.NotFoundError{
+				Entity: "book",
+				ID:     ID,
+			}
 		}
+		return nil, result.Error
 	}
 	return book, nil
 }

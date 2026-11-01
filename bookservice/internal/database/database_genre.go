@@ -43,8 +43,12 @@ func (c Client) GetGenreById(ctx context.Context, ID string) (*models.Genre, err
 	result := c.DB.WithContext(ctx).Where(models.Genre{GenreID: ID}).First(&genre)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, result.Error
+			return nil, &dberrors.NotFoundError{
+				Entity: "genre",
+				ID:     ID,
+			}
 		}
+		return nil, result.Error
 	}
 	return genre, nil
 }
