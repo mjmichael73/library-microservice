@@ -1,11 +1,15 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -92,9 +96,36 @@ func (s *EchoServer) Start() error {
 	if appPort == "" {
 		return errors.New("APP_PORT is not set")
 	}
-	if err := s.echo.Start(":" + appPort); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("server shutdown occurred: %s", err)
-		return err
+
+	errCh := make(chan error, 1)
+	go func() {
+		if err := s.echo.Start(":" + appPort); err != nil && err != http.ErrServerClosed {
+			errCh <- err
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(quit)
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return err
+		}
+	case <-quit:
+		log.Println("Shutting down server gracefully...")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := s.echo.Shutdown(ctx); err != nil {
+			log.Printf("Server forced to shutdown: %v", err)
+		}
+	}
+
+	if s.closer != nil {
+		if err := s.closer.Close(); err != nil {
+			log.Printf("Error closing tracer: %v", err)
+		}
 	}
 	return nil
 }

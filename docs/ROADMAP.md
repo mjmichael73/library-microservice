@@ -263,9 +263,15 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-026 — No graceful shutdown
 - **Severity:** P2
+- **Status:** Done
 - **Location:** all `main.go` / `Start()`
 - **Problem:** No SIGTERM handling; Jaeger closer never closed.
 - **Fix:** Use `echo` graceful shutdown + `defer closer.Close()`.
+- **Note:** `EchoServer.Start()` in all four services now validates the port,
+  runs `s.echo.Start` in a goroutine, waits on `SIGINT`/`SIGTERM`, shuts the
+  server down with a 10s `context.WithTimeout`, and closes `s.closer` when
+  non-nil. A bind/serve error (other than `http.ErrServerClosed`) short-circuits
+  back to the caller instead of `log.Fatalf`.
 
 ### R-027 — Deprecated Jaeger client
 - **Severity:** P3
