@@ -50,6 +50,30 @@ func (c Client) RegisterUser(ctx context.Context, user *models.User) (*models.Us
 	return user, nil
 }
 
+// UpdateUser updates the mutable profile fields (first and last name) of an
+// existing user and returns the persisted record. A missing user maps to
+// *dberrors.NotFoundError via the RowsAffected check (GORM Updates does not
+// error on 0 rows).
+func (c Client) UpdateUser(ctx context.Context, user *models.User) (*models.User, error) {
+	result := c.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where(&models.User{UserID: user.UserID}).
+		Updates(models.User{
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+		})
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, &dberrors.NotFoundError{
+			Entity: "user",
+			ID:     user.UserID,
+		}
+	}
+	return c.GetUserById(ctx, user.UserID)
+}
+
 // isDuplicateKeyError reports whether err represents a unique-constraint
 // violation. It checks gorm.ErrDuplicatedKey first (which the Postgres driver
 // translates from SQLSTATE 23505) and then falls back to a safe type assertion

@@ -37,3 +37,21 @@ type LoginResponse struct {
 	Token     string `json:"token"`
 	IsAdmin   bool   `json:"is_admin"`
 }
+
+// UserProfileRequest is the payload for updating the authenticated user's
+// profile. Only the mutable name fields are accepted; email and password
+// changes are out of scope here.
+type UserProfileRequest struct {
+	FirstName string `json:"first_name" validate:"required"`
+	LastName  string `json:"last_name" validate:"required"`
+}
+
+// UserProfileResponse is the shape returned by the profile endpoints; it never
+// includes the password hash.
+type UserProfileResponse struct {
+	UserID    string `json:"user_id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	IsAdmin   bool   `json:"is_admin"`
+}

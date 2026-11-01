@@ -16,6 +16,8 @@ func (s *EchoServer) GetAllGenres(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
+	limit, offset := paginationParams(ctx)
+	genres = paginate(genres, offset, limit)
 	return ctx.JSON(http.StatusOK, echo.Map{
 		"status":  "Success",
 		"message": "Genres received successfully.",

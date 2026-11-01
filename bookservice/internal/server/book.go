@@ -17,6 +17,8 @@ func (s *EchoServer) GetAllBooks(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
+	limit, offset := paginationParams(ctx)
+	books = paginate(books, offset, limit)
 	return ctx.JSON(http.StatusOK, echo.Map{
 		"status":  "Success",
 		"message": "Books received successfully.",

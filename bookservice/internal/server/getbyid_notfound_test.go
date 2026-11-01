@@ -38,6 +38,11 @@ type mockDatabaseClient struct {
 	genreTitleErr  error
 	createdGenre   *models.Genre
 	createGenreErr error
+
+	// Review support (R-034).
+	reviews         []models.BookReview
+	reviewsErr      error
+	createReviewErr error
 }
 
 func (m *mockDatabaseClient) Ready() bool { return true }
@@ -118,6 +123,17 @@ func (m *mockDatabaseClient) DecrementAvailableCopies(ctx context.Context, bookI
 }
 func (m *mockDatabaseClient) IncrementAvailableCopies(ctx context.Context, bookID string) error {
 	return nil
+}
+
+// Review support (R-034). Zero values preserve the previous behaviour.
+func (m *mockDatabaseClient) CreateReview(ctx context.Context, review *models.BookReview) (*models.BookReview, error) {
+	if m.createReviewErr != nil {
+		return nil, m.createReviewErr
+	}
+	return review, nil
+}
+func (m *mockDatabaseClient) GetReviewsByBook(ctx context.Context, bookID string) ([]models.BookReview, error) {
+	return m.reviews, m.reviewsErr
 }
 
 func TestGetByIdHandlers_MissingRecord_Returns404(t *testing.T) {

@@ -52,6 +52,10 @@ type Server interface {
 	// User Authenticated Routes
 	ValidateToken(ctx echo.Context) error
 	IsAdmin(ctx echo.Context) error
+
+	// User Profile
+	GetProfile(ctx echo.Context) error
+	UpdateProfile(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -156,4 +160,6 @@ func (s *EchoServer) registerRoutes() {
 	userGroup.Use(echojwt.JWT(s.JWTSecret))
 	userGroup.GET("/validate-token", s.ValidateToken)
 	userGroup.GET("/is-admin", s.IsAdmin)
+	userGroup.GET("/profile", s.GetProfile)
+	userGroup.PUT("/profile", s.UpdateProfile)
 }

@@ -57,6 +57,10 @@ type DatabaseClient interface {
 	DetachAuthor(ctx context.Context, bookID, authorID string) error
 	AttachGenre(ctx context.Context, bookID, genreID string) error
 	DetachGenre(ctx context.Context, bookID, genreID string) error
+
+	// Reviews
+	CreateReview(ctx context.Context, review *models.BookReview) (*models.BookReview, error)
+	GetReviewsByBook(ctx context.Context, bookID string) ([]models.BookReview, error)
 }
 
 type Client struct {
@@ -92,6 +96,7 @@ func NewDatabaseClient() (DatabaseClient, error) {
 		&models.Genre{},
 		&models.BookAuthor{},
 		&models.BookGenre{},
+		&models.BookReview{},
 	); err != nil {
 		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
 	}

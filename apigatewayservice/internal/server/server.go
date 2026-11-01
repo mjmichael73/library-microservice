@@ -195,6 +195,18 @@ func (s *EchoServer) registerRoutes() {
 	s.echo.GET("/user/is-admin", reverseProxy("http://userservice-app:8080"))
 	s.echo.GET("/user/validate-token", reverseProxy("http://userservice-app:8080"))
 
+	// Authenticated profile management (R-034). The token is validated at the
+	// gateway before the request is forwarded to userservice.
+	profileGroup := s.echo.Group("/user/profile")
+	profileGroup.Use(validateTokenMiddleware)
+	profileGroup.GET("", reverseProxy("http://userservice-app:8080"))
+	profileGroup.PUT("", reverseProxy("http://userservice-app:8080"))
+
+	// Book reviews (R-034). Reading is public; posting requires a valid token.
+	reviewGroup := s.echo.Group("/books/:id/reviews")
+	reviewGroup.GET("", reverseProxy("http://bookservice-app:8081"))
+	reviewGroup.POST("", reverseProxy("http://bookservice-app:8081"), validateTokenMiddleware)
+
 	protectedRoutes := s.echo.Group("/loan")
 	protectedRoutes.Use(validateTokenMiddleware)
 	protectedRoutes.Any("/borrow", reverseProxy("http://loanservice-app:8082"))

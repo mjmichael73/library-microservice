@@ -16,6 +16,8 @@ func (s *EchoServer) GetAllAuthors(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
+	limit, offset := paginationParams(ctx)
+	authors = paginate(authors, offset, limit)
 	return ctx.JSON(http.StatusOK, echo.Map{
 		"status":  "Success",
 		"message": "Authors received successfully.",

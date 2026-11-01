@@ -73,6 +73,10 @@ type Server interface {
 	DecrementAvailableCopies(ctx echo.Context) error
 	IncrementAvailableCopies(ctx echo.Context) error
 
+	// Reviews
+	CreateReview(ctx echo.Context) error
+	GetReviews(ctx echo.Context) error
+
 	IsBookAvailableToBorrow(ctx echo.Context) error
 }
 
@@ -188,6 +192,16 @@ func (s *EchoServer) registerRoutes() {
 	adminBookGroup.DELETE("/:id/genres/:genreId", s.DetachGenre)
 	adminBookGroup.POST("/:id/decrement", s.DecrementAvailableCopies)
 	adminBookGroup.POST("/:id/increment", s.IncrementAvailableCopies)
+
+	// Book reviews (public read, any caller may post a review for the core
+	// feature). Mirrored under /admin/books so the gateway's admin proxy, which
+	// forwards everything under /admin to bookservice, can reach them.
+	adminBookGroup.POST("/:id/reviews", s.CreateReview)
+	adminBookGroup.GET("/:id/reviews", s.GetReviews)
+
+	bookGroup := s.echo.Group("/books")
+	bookGroup.POST("/:id/reviews", s.CreateReview)
+	bookGroup.GET("/:id/reviews", s.GetReviews)
 
 	s.echo.GET("/isbookavailabletoboroow/:id", s.IsBookAvailableToBorrow)
 }

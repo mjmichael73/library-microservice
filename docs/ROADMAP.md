@@ -349,5 +349,34 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-034 — Search, pagination, reviews, profiles, admin tools
 - **Severity:** P3
+- **Status:** Done
 - **Location:** repository-wide
 - **Description:** Full-text search, pagination, book reviews/ratings, user profile management, admin user management, export reports, soft delete, cover images, recommendations.
+- **Note:** Core subset implemented.
+  - **Pagination:** `GetAllBooks`/`GetAllAuthors`/`GetAllGenres` in `bookservice`
+    read `limit` (default 10, capped at 100) and `offset` (default 0) query
+    parameters and slice results, keeping the `{status, message, data}`
+    envelope (`bookservice/internal/server/pagination.go`; an offset past the end
+    returns an empty array rather than `null`).
+  - **Profiles:** `userservice` gained `models.UserProfileRequest`,
+    `DatabaseClient.UpdateUser` (GORM `Updates` + `RowsAffected == 0` →
+    `NotFoundError`, re-fetch by id), and handlers `GetProfile`/`UpdateProfile`
+    backed by `GET`/`PUT /user/profile` behind the JWT middleware. Responses use
+    `models.UserProfileResponse` and never expose the password. The gateway
+    proxies `/user/profile` after validating the token.
+  - **Reviews:** `bookservice` gained `models.BookReview`
+    `{ReviewID, BookID, UserID, Rating, Comment, CreatedAt}`,
+    `DatabaseClient.CreateReview`/`GetReviewsByBook` (newest first), handlers
+    `CreateReview`/`GetReviews`, and routes `POST`/`GET /books/:id/reviews`
+    (also under `/admin/books/:id/reviews`). `BookReview` is registered in
+    `AutoMigrate`; `bookservice/data/schema.sql` documents the table. Rating is
+    validated to 1–5; a missing book maps to 404.
+  - Covered by `bookservice/internal/server/review_r034_test.go`,
+    `userservice/internal/server/profile_r034_test.go`, and
+    `userservice/internal/database/update_user_r034_test.go`.
+- **Future work (not implemented):** full-text search, admin user management,
+  export reports, soft delete, cover images, and recommendations.
+- **Concern:** review creation takes `user_id` from the request body and the
+  public `/books/:id/reviews` POST route is not yet token-validated against
+  userservice (unlike `/loan`, R-023), so the caller's identity is not verified.
+  Token validation and deriving `user_id` from the JWT are deferred follow-ups.

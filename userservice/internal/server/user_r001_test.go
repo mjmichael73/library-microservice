@@ -19,6 +19,8 @@ import (
 type mockUserDB struct {
 	registerFn   func(context.Context, *models.User) (*models.User, error)
 	getByEmailFn func(context.Context, string) (*models.User, error)
+	getByIdFn    func(context.Context, string) (*models.User, error)
+	updateFn     func(context.Context, *models.User) (*models.User, error)
 }
 
 func (m *mockUserDB) Ready() bool { return true }
@@ -38,6 +40,16 @@ func (m *mockUserDB) GetUserByEmail(ctx context.Context, email string) (*models.
 }
 
 func (m *mockUserDB) GetUserById(ctx context.Context, id string) (*models.User, error) {
+	if m.getByIdFn != nil {
+		return m.getByIdFn(ctx, id)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockUserDB) UpdateUser(ctx context.Context, user *models.User) (*models.User, error) {
+	if m.updateFn != nil {
+		return m.updateFn(ctx, user)
+	}
 	return nil, errors.New("not implemented")
 }
 
