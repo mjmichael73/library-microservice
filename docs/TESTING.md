@@ -2,13 +2,13 @@
 
 ## Current state
 
-There are **no automated tests** in the repository today (`*_test.go` files: none). All verification is manual via curl/Postman. This is tracked as roadmap item R-029.
+Automated tests exist for all services and run in CI. Unit tests use `httptest` and fake `DatabaseClient` implementations; database-layer tests use `sqlmock`.
 
 ## Recommended testing strategy
 
 ### Unit tests
 - Handler tests using `httptest` + a fake `DatabaseClient` interface implementation.
-- Database layer tests against a real Postgres (testcontainers-go) or SQLite for pure logic.
+- Database layer tests using `sqlmock` for query behavior.
 - Validation tests for request structs.
 
 ### Integration tests
@@ -36,9 +36,9 @@ There are **no automated tests** in the repository today (`*_test.go` files: non
 
 ## CI
 
-A GitHub Actions workflow should run `go build ./...`, `go vet ./...`, `golangci-lint`, and `go test ./...` for each service on every PR (roadmap R-030).
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs `go build ./...`, `go vet ./...`, and `go test ./... -race` for each service on push and pull requests.
 
-## Running tests (once added)
+## Running tests
 
 ```bash
 cd <service> && go test ./... -race -coverprofile=coverage.out

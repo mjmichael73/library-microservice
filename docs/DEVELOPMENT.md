@@ -9,7 +9,7 @@
 
 ## Environment
 
-Copy `.env.example` to `.env` and adjust values. The root `.env` is shared by all services via `env_file` in compose. Each service also has its own `.env.example` (userservice, bookservice) for standalone runs.
+Copy `.env.example` to `.env` and adjust values. The root `.env` is shared by all services via `env_file` in compose. Each service also has its own `.env.example` for standalone runs where applicable.
 
 > Never commit real secrets. `.env` is gitignored; keep `.env.example` placeholders only.
 
@@ -34,10 +34,12 @@ USERSERVICE_DB_NAME=userservice_db \
 USERSERVICE_DB_USER=userservice_db_user \
 USERSERVICE_DB_PASS=userservice_db_pass \
 USERSERVICE_DB_TABLE_PREFIX="userservice." \
+JWT_SECRET=dev-secret \
+KAFKA_BROKER=localhost:9092 \
 go run .
 ```
 
-Start Postgres first (e.g. via compose) and load `userservice/data/schema.sql`.
+Start Postgres first (e.g. via compose) and load the relevant `data/schema.sql`.
 
 ## Build
 
@@ -45,11 +47,11 @@ Start Postgres first (e.g. via compose) and load `userservice/data/schema.sql`.
 cd <service> && go build ./... && go vet ./...
 ```
 
-All four services must build with zero errors before committing.
+All services must build with zero errors before committing.
 
 ## Code style
 
-- Run `gofmt -w .` and `goimports -w .` before committing.
+- Run `gofmt -w .` (and `goimports -w .` when available) before committing.
 - Keep handlers thin; push logic into the database/client layer.
 - Wrap DB errors into `dberrors.NotFoundError` / `dberrors.ConflictError` so handlers can map to HTTP statuses.
 - Return a consistent `{status, message, data}` envelope.
@@ -67,5 +69,5 @@ All four services must build with zero errors before committing.
 ## Troubleshooting
 
 - **App exits immediately on startup**: DB not ready. Check `depends_on` and `pg_isready`; re-run `make db` after containers are healthy.
-- **404 on borrow availability check**: ensure bookservice route and loanservice URL typo match (tracked as R-019/R-008 in roadmap).
+- **404 on borrow availability check**: ensure bookservice route and loanservice URL match.
 - **Kafka connection refused**: broker hostname is `broker` inside the compose network, `localhost:9092` from host.
