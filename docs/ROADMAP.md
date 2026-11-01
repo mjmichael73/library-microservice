@@ -10,6 +10,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-001 — Unchecked type assertion panic in RegisterUser
 - **Severity:** P0
+- **Status:** Done
 - **Location:** `userservice/internal/database/database_user.go:42`
 - **Problem:** `result.Error.(*pgconn.PgError).Code` panics if the error is not a `*pgconn.PgError`.
 - **Fix:** Use a type assertion with `ok`, or `errors.As`; check `gorm.ErrDuplicatedKey` first.
