@@ -146,9 +146,12 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-017 — notificationservice missing from compose
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `docker-compose.yml`
 - **Problem:** Service referenced in env but not defined.
 - **Fix:** Add compose entry (or remove references until implemented).
+- **Resolution:** Removed the `NOTIFICATIONSERVICE_*` vars from `.env`/`.env.example`
+  and left a note in `docker-compose.yml`; the service is tracked as R-033.
 
 ---
 
