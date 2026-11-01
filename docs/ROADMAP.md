@@ -223,6 +223,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-023 — Borrow authorization missing
 - **Severity:** P0
+- **Status:** Done
 - **Location:** `loanservice/internal/server/borrow.go`
 - **Problem:** Any caller can borrow for any `user_id`; no user existence check.
 - **Fix:** Validate JWT/user via userservice; verify the authenticated user matches `user_id`.

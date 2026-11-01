@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -46,12 +47,21 @@ func (m *mockBorrowDB) CreateBorrow(ctx context.Context, borrow *models.Borrow) 
 }
 
 // trackingReadCloser records whether Close was called so a leaked body can be
-// detected (R-003).
+// detected (R-003). It optionally serves a fixed payload before reporting EOF.
 type trackingReadCloser struct {
 	closed bool
+	data   string
 }
 
-func (t *trackingReadCloser) Read(_ []byte) (int, error) { return 0, io.EOF }
+func (t *trackingReadCloser) Read(p []byte) (int, error) {
+	if t.data == "" {
+		return 0, io.EOF
+	}
+	n := copy(p, t.data)
+	t.data = t.data[n:]
+	return n, nil
+}
+
 func (t *trackingReadCloser) Close() error {
 	t.closed = true
 	return nil
@@ -73,6 +83,31 @@ func (rt *staticRoundTripper) RoundTrip(_ *http.Request) (*http.Response, error)
 	}, nil
 }
 
+// routedRoundTripper serves a distinct canned response for the userservice
+// token-validation call and the bookservice availability call, and records the
+// Authorization header forwarded to userservice (R-023).
+type routedRoundTripper struct {
+	userServiceStatus int
+	userServiceBody   *trackingReadCloser
+	bookServiceStatus int
+	bookServiceBody   *trackingReadCloser
+	authHeader        string
+}
+
+func (rt *routedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if strings.Contains(req.URL.Path, "/user/validate-token") {
+		rt.authHeader = req.Header.Get("Authorization")
+		return &http.Response{StatusCode: rt.userServiceStatus, Body: rt.userServiceBody, Header: http.Header{}}, nil
+	}
+	return &http.Response{StatusCode: rt.bookServiceStatus, Body: rt.bookServiceBody, Header: http.Header{}}, nil
+}
+
+// userServiceTokenBody builds a userservice /user/validate-token success body
+// that reports userID as the authenticated user.
+func userServiceTokenBody(userID string) *trackingReadCloser {
+	return &trackingReadCloser{data: `{"status":"Success","message":"User is valid","data":"` + userID + `"}`}
+}
+
 func newBorrowTestServer(t *testing.T, db database.DatabaseClient) *EchoServer {
 	t.Helper()
 	s := &EchoServer{
@@ -90,10 +125,25 @@ func validBorrowBody(t *testing.T) string {
 	return `{"user_id":"u1","book_id":"b1","from_date":"` + from + `","to_date":"` + to + `","remarks":"test"}`
 }
 
+// newBorrowRequest builds a create-borrow request with the given Authorization
+// header (set to "Bearer <token>") and body.
+func newBorrowRequest(t *testing.T, token, body string) *http.Request {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodPost, "/loan/borrow", bytes.NewBufferString(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	return req
+}
+
 // TestCreateBorrow_Non200ClosesBody verifies that the bookservice response
 // body is closed when the service returns a non-200 status, i.e. that the body
-// is no longer leaked on the early-return path (R-003).
+// is no longer leaked on the early-return path (R-003). Token validation must
+// succeed first so the request reaches the bookservice call (R-023).
 func TestCreateBorrow_Non200ClosesBody(t *testing.T) {
+	t.Setenv("USERSERVICE_APP_HOST", "127.0.0.1")
+	t.Setenv("USERSERVICE_APP_PORT", "9")
 	t.Setenv("BOOKSERVICE_APP_HOST", "127.0.0.1")
 	t.Setenv("BOOKSERVICE_APP_PORT", "9")
 
@@ -105,20 +155,26 @@ func TestCreateBorrow_Non200ClosesBody(t *testing.T) {
 	s := newBorrowTestServer(t, db)
 
 	body := &trackingReadCloser{}
+	rt := &routedRoundTripper{
+		userServiceStatus: http.StatusOK,
+		userServiceBody:   userServiceTokenBody("u1"),
+		bookServiceStatus: http.StatusServiceUnavailable,
+		bookServiceBody:   body,
+	}
 	originalTransport := http.DefaultTransport
-	http.DefaultTransport = &staticRoundTripper{status: http.StatusServiceUnavailable, body: body}
+	http.DefaultTransport = rt
 	defer func() { http.DefaultTransport = originalTransport }()
 
-	req := httptest.NewRequest(http.MethodPost, "/loan/borrow", bytes.NewBufferString(validBorrowBody(t)))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := s.echo.NewContext(req, rec)
+	c := s.echo.NewContext(newBorrowRequest(t, "test-token", validBorrowBody(t)), httptest.NewRecorder())
 
 	if err := s.CreateBorrow(c); err != nil {
 		t.Fatalf("handler returned error: %v", err)
 	}
-	if rec.Code != http.StatusNotFound {
-		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	if rt.authHeader != "Bearer test-token" {
+		t.Fatalf("userservice Authorization header = %q, want %q", rt.authHeader, "Bearer test-token")
+	}
+	if got := c.Response().Status; got != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", got, http.StatusNotFound)
 	}
 	if !body.closed {
 		t.Fatal("response body was not closed on the non-200 path")
@@ -126,8 +182,10 @@ func TestCreateBorrow_Non200ClosesBody(t *testing.T) {
 }
 
 // TestCreateBorrow_SuccessClosesBody verifies the success path still closes the
-// body after the refactor (R-003).
+// body after the refactor (R-003), with token validation passing (R-023).
 func TestCreateBorrow_SuccessClosesBody(t *testing.T) {
+	t.Setenv("USERSERVICE_APP_HOST", "127.0.0.1")
+	t.Setenv("USERSERVICE_APP_PORT", "9")
 	t.Setenv("BOOKSERVICE_APP_HOST", "127.0.0.1")
 	t.Setenv("BOOKSERVICE_APP_PORT", "9")
 
@@ -142,14 +200,18 @@ func TestCreateBorrow_SuccessClosesBody(t *testing.T) {
 	s := newBorrowTestServer(t, db)
 
 	body := &trackingReadCloser{}
+	rt := &routedRoundTripper{
+		userServiceStatus: http.StatusOK,
+		userServiceBody:   userServiceTokenBody("u1"),
+		bookServiceStatus: http.StatusOK,
+		bookServiceBody:   body,
+	}
 	originalTransport := http.DefaultTransport
-	http.DefaultTransport = &staticRoundTripper{status: http.StatusOK, body: body}
+	http.DefaultTransport = rt
 	defer func() { http.DefaultTransport = originalTransport }()
 
-	req := httptest.NewRequest(http.MethodPost, "/loan/borrow", bytes.NewBufferString(validBorrowBody(t)))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
-	c := s.echo.NewContext(req, rec)
+	c := s.echo.NewContext(newBorrowRequest(t, "test-token", validBorrowBody(t)), rec)
 
 	if err := s.CreateBorrow(c); err != nil {
 		t.Fatalf("handler returned error: %v", err)
