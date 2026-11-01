@@ -249,9 +249,17 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-025 — No request timeouts / trace propagation
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `loanservice/internal/server/borrow.go:67-68`
 - **Problem:** `http.Client{}` with no timeout; trace context not injected.
 - **Fix:** Set `Timeout`; inject span via `opentracing.GlobalTracer().Inject`.
+- **Note:** `borrow.go` now uses a single `outboundClientTimeout = 5 * time.Second`
+  for both the userservice validate-token and bookservice availability clients,
+  and builds the availability request with `http.NewRequestWithContext` (the
+  validate-token call already used it). A new `injectSpan(ctx, req)` helper
+  serialises the active span into `req.Header` via
+  `opentracing.GlobalTracer().Inject(..., opentracing.HTTPHeaders, ...)` for both
+  calls, so downstream spans are joined to the caller's trace.
 
 ### R-026 — No graceful shutdown
 - **Severity:** P2

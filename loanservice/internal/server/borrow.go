@@ -13,9 +13,27 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/mjmichael73/library-microservice/loanservice/internal/dberrors"
 	"github.com/mjmichael73/library-microservice/loanservice/internal/models"
+	"github.com/opentracing/opentracing-go"
 )
 
-const userServiceClientTimeout = 5 * time.Second
+// outboundClientTimeout bounds every inter-service HTTP call so a slow or
+// unresponsive dependency cannot block a request indefinitely.
+const outboundClientTimeout = 5 * time.Second
+
+// injectSpan serialises the active span from ctx into the outgoing request
+// headers (if a span is present) so the downstream service can continue the
+// trace. It is best-effort: a missing span or a failed inject is ignored.
+func injectSpan(ctx context.Context, req *http.Request) {
+	span := opentracing.SpanFromContext(ctx)
+	if span == nil {
+		return
+	}
+	_ = opentracing.GlobalTracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(req.Header),
+	)
+}
 
 var (
 	// errUserServiceUnavailable signals that the userservice location is not
@@ -45,8 +63,9 @@ func validateTokenWithUserService(ctx context.Context, authHeader string) (strin
 		return "", errInvalidToken
 	}
 	req.Header.Set("Authorization", authHeader)
+	injectSpan(ctx, req)
 
-	client := &http.Client{Timeout: userServiceClientTimeout}
+	client := &http.Client{Timeout: outboundClientTimeout}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", errInvalidToken
@@ -163,7 +182,7 @@ func (s *EchoServer) CreateBorrow(ctx echo.Context) error {
 		})
 	}
 	bookServiceUrl := "http://" + bookServiceAppHost + ":" + bookServiceAppPort
-	req, err := http.NewRequest("GET", bookServiceUrl+"/isbookavailabletoboroow/"+bookId, nil)
+	req, err := http.NewRequestWithContext(ctx.Request().Context(), http.MethodGet, bookServiceUrl+"/isbookavailabletoboroow/"+bookId, nil)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, echo.Map{
 			"status":  "Failed",
@@ -171,7 +190,8 @@ func (s *EchoServer) CreateBorrow(ctx echo.Context) error {
 			"data":    err.Error(),
 		})
 	}
-	client := &http.Client{}
+	injectSpan(ctx.Request().Context(), req)
+	client := &http.Client{Timeout: outboundClientTimeout}
 	resp, err := client.Do(req)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, echo.Map{
