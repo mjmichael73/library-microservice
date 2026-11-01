@@ -223,3 +223,54 @@ func (s *EchoServer) IsBookAvailableToBorrow(ctx echo.Context) error {
 		})
 	}
 }
+
+func (s *EchoServer) AttachAuthor(ctx echo.Context) error {
+	bookID := ctx.Param("id")
+	authorID := ctx.Param("authorId")
+	if err := s.DB.AttachAuthor(ctx.Request().Context(), bookID, authorID); err != nil {
+		switch err.(type) {
+		case *dberrors.ConflictError:
+			return ctx.JSON(http.StatusBadRequest, echo.Map{"status": "Failed", "message": "Author already attached to book."})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, echo.Map{"status": "Failed", "message": "Internal server error, please try again later."})
+		}
+	}
+	return ctx.JSON(http.StatusCreated, echo.Map{"status": "Success", "message": "Author attached to book successfully."})
+}
+
+func (s *EchoServer) DetachAuthor(ctx echo.Context) error {
+	bookID := ctx.Param("id")
+	authorID := ctx.Param("authorId")
+	if err := s.DB.DetachAuthor(ctx.Request().Context(), bookID, authorID); err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{"status": "Failed", "message": "Association not found."})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, echo.Map{"status": "Failed", "message": "Internal server error, please try again later."})
+		}
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{"status": "Success", "message": "Author detached from book successfully."})
+}
+
+func (s *EchoServer) AttachGenre(ctx echo.Context) error {
+	bookID := ctx.Param("id")
+	genreID := ctx.Param("genreId")
+	if err := s.DB.AttachGenre(ctx.Request().Context(), bookID, genreID); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{"status": "Failed", "message": "Internal server error, please try again later."})
+	}
+	return ctx.JSON(http.StatusCreated, echo.Map{"status": "Success", "message": "Genre attached to book successfully."})
+}
+
+func (s *EchoServer) DetachGenre(ctx echo.Context) error {
+	bookID := ctx.Param("id")
+	genreID := ctx.Param("genreId")
+	if err := s.DB.DetachGenre(ctx.Request().Context(), bookID, genreID); err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{"status": "Failed", "message": "Association not found."})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, echo.Map{"status": "Failed", "message": "Internal server error, please try again later."})
+		}
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{"status": "Success", "message": "Genre detached from book successfully."})
+}

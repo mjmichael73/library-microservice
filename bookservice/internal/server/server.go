@@ -59,6 +59,12 @@ type Server interface {
 	UpdateBook(ctx echo.Context) error
 	DeleteBook(ctx echo.Context) error
 
+	// Book associations
+	AttachAuthor(ctx echo.Context) error
+	DetachAuthor(ctx echo.Context) error
+	AttachGenre(ctx echo.Context) error
+	DetachGenre(ctx echo.Context) error
+
 	IsBookAvailableToBorrow(ctx echo.Context) error
 }
 
@@ -141,6 +147,10 @@ func (s *EchoServer) registerRoutes() {
 	adminBookGroup.GET("/:id", s.GetBookById)
 	adminBookGroup.PUT("/:id", s.UpdateBook)
 	adminBookGroup.DELETE("/:id", s.DeleteBook)
+	adminBookGroup.POST("/:id/authors/:authorId", s.AttachAuthor)
+	adminBookGroup.DELETE("/:id/authors/:authorId", s.DetachAuthor)
+	adminBookGroup.POST("/:id/genres/:genreId", s.AttachGenre)
+	adminBookGroup.DELETE("/:id/genres/:genreId", s.DetachGenre)
 
 	s.echo.GET("/isbookavailabletoboroow/:id", s.IsBookAvailableToBorrow)
 }

@@ -95,6 +95,25 @@ func (m *mockDatabaseClient) UpdateBook(ctx context.Context, book *models.Book) 
 }
 func (m *mockDatabaseClient) DeleteBook(ctx context.Context, ID string) error { return nil }
 
+func (m *mockDatabaseClient) GetBookAuthors(ctx context.Context, bookID string) ([]models.Author, error) {
+	return nil, nil
+}
+func (m *mockDatabaseClient) GetBookGenres(ctx context.Context, bookID string) ([]models.Genre, error) {
+	return nil, nil
+}
+func (m *mockDatabaseClient) AttachAuthor(ctx context.Context, bookID, authorID string) error {
+	return nil
+}
+func (m *mockDatabaseClient) DetachAuthor(ctx context.Context, bookID, authorID string) error {
+	return nil
+}
+func (m *mockDatabaseClient) AttachGenre(ctx context.Context, bookID, genreID string) error {
+	return nil
+}
+func (m *mockDatabaseClient) DetachGenre(ctx context.Context, bookID, genreID string) error {
+	return nil
+}
+
 func TestGetByIdHandlers_MissingRecord_Returns404(t *testing.T) {
 	tests := []struct {
 		name         string

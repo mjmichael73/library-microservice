@@ -45,6 +45,14 @@ type DatabaseClient interface {
 	GetBookById(ctx context.Context, ID string) (*models.Book, error)
 	UpdateBook(ctx context.Context, book *models.Book) (*models.Book, error)
 	DeleteBook(ctx context.Context, ID string) error
+
+	// Book ↔ author/genre associations
+	GetBookAuthors(ctx context.Context, bookID string) ([]models.Author, error)
+	GetBookGenres(ctx context.Context, bookID string) ([]models.Genre, error)
+	AttachAuthor(ctx context.Context, bookID, authorID string) error
+	DetachAuthor(ctx context.Context, bookID, authorID string) error
+	AttachGenre(ctx context.Context, bookID, genreID string) error
+	DetachGenre(ctx context.Context, bookID, genreID string) error
 }
 
 type Client struct {

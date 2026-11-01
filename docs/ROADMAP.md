@@ -201,6 +201,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-021 — Book↔author/genre associations not exposed
 - **Severity:** P2
+- **Status:** Done
 - **Location:** models `BookAuthor`/`BookGenre` exist but unused
 - **Problem:** No endpoints to attach; books returned without authors/genres.
 - **Fix:** Add endpoints and preload associations in `GetBookById`/`GetAllBooks`.

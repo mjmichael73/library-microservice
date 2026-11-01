@@ -28,6 +28,12 @@ func TestUpdateBook_ReturnsRefetchedRecord(t *testing.T) {
 		WithArgs("book-id", 1).
 		WillReturnRows(sqlmock.NewRows([]string{"book_id", "title", "summary", "created_at", "updated_at"}).
 			AddRow("book-id", "new title", "new summary", now, now))
+	mock.ExpectQuery(`SELECT \* FROM "book_authors" WHERE "book_authors"."book_id" = \$1`).
+		WithArgs("book-id").
+		WillReturnRows(sqlmock.NewRows([]string{"book_author_id", "book_id", "author_id"}))
+	mock.ExpectQuery(`SELECT \* FROM "book_genres" WHERE "book_genres"."book_id" = \$1`).
+		WithArgs("book-id").
+		WillReturnRows(sqlmock.NewRows([]string{"book_genre_id", "book_id", "genre_id"}))
 
 	book, err := client.UpdateBook(context.Background(), &models.Book{
 		BookID:  "book-id",
