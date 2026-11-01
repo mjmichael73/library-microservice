@@ -171,7 +171,7 @@ services:
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=Pass123!@
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-Pass123!@}
       - GF_PATH_PROVISIONING=/etc/grafana/provisioning
     depends_on:
       - prometheus

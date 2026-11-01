@@ -139,6 +139,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-016 — Grafana admin password hardcoded
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `docker-compose.yml:156`
 - **Problem:** `GF_SECURITY_ADMIN_PASSWORD=Pass123!@`.
 - **Fix:** Use env var with a default only for dev.
