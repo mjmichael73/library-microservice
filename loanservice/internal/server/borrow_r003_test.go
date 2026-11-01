@@ -20,6 +20,9 @@ import (
 type mockBorrowDB struct {
 	activeBorrowFn  func(context.Context, string, string) (*models.Borrow, error)
 	activeBorrowsFn func(context.Context, string) ([]models.Borrow, error)
+	getBorrowFn     func(context.Context, string) (*models.Borrow, error)
+	returnBorrowFn  func(context.Context, string) (*models.Borrow, error)
+	markOverdueFn   func(context.Context) ([]models.Borrow, error)
 	createFn        func(context.Context, *models.Borrow) (*models.Borrow, error)
 }
 
@@ -35,6 +38,27 @@ func (m *mockBorrowDB) GetActiveBorrowByUserIdAndBookId(ctx context.Context, boo
 func (m *mockBorrowDB) GetActiveBorrowsByBookId(ctx context.Context, bookId string) ([]models.Borrow, error) {
 	if m.activeBorrowsFn != nil {
 		return m.activeBorrowsFn(ctx, bookId)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockBorrowDB) GetBorrowById(ctx context.Context, borrowID string) (*models.Borrow, error) {
+	if m.getBorrowFn != nil {
+		return m.getBorrowFn(ctx, borrowID)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockBorrowDB) ReturnBorrow(ctx context.Context, borrowID string) (*models.Borrow, error) {
+	if m.returnBorrowFn != nil {
+		return m.returnBorrowFn(ctx, borrowID)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockBorrowDB) MarkOverdueBorrows(ctx context.Context) ([]models.Borrow, error) {
+	if m.markOverdueFn != nil {
+		return m.markOverdueFn(ctx)
 	}
 	return nil, errors.New("not implemented")
 }

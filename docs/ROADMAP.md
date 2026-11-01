@@ -322,8 +322,18 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-031 — Return book + overdue detection
 - **Severity:** P3
+- **Status:** Done
 - **Location:** loanservice
 - **Description:** Add return endpoint, set `returned_date`, mark status `returned`, detect overdue.
+- **Fix:** Added `DatabaseClient.GetBorrowById`, `ReturnBorrow` and
+  `MarkOverdueBorrows`. `ReturnBorrow` loads the borrow (404 when missing),
+  rejects an already-returned borrow (409), then sets `returned_date`/`updated_at`
+  and status `returned` when on time or `overdue` when late. Handlers
+  `ReturnBorrow` (`POST /loan/return/:borrow_id`, `PUT /loan/:borrow_id/return`)
+  and `GetOverdueBorrows` (`GET /loan/overdue`) map errors to 404/409/500 and
+  use the standard envelope; routes are proxied through the gateway. Covered by
+  `loanservice/internal/database/return_borrow_r031_test.go` and
+  `loanservice/internal/server/return_borrow_r031_test.go`.
 
 ### R-032 — Inventory management (copies)
 - **Severity:** P3

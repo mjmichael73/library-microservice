@@ -46,6 +46,8 @@ type Server interface {
 
 	CreateBorrow(ctx echo.Context) error
 	GetActiveBorrowsByBookId(ctx echo.Context) error
+	ReturnBorrow(ctx echo.Context) error
+	GetOverdueBorrows(ctx echo.Context) error
 }
 
 type EchoServer struct {
@@ -133,4 +135,7 @@ func (s *EchoServer) registerRoutes() {
 
 	s.echo.POST("/loan/borrow", s.CreateBorrow)
 	s.echo.GET("/loan/active/:book_id", s.GetActiveBorrowsByBookId)
+	s.echo.POST("/loan/return/:borrow_id", s.ReturnBorrow)
+	s.echo.PUT("/loan/:borrow_id/return", s.ReturnBorrow)
+	s.echo.GET("/loan/overdue", s.GetOverdueBorrows)
 }

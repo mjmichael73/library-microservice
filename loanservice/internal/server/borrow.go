@@ -112,6 +112,63 @@ func (s *EchoServer) GetActiveBorrowsByBookId(ctx echo.Context) error {
 	})
 }
 
+// ReturnBorrow marks a borrow as returned. It sets the returned date and the
+// final status ("returned" when on time, "overdue" when late) and returns the
+// updated borrow. A missing borrow maps to 404 and an already-returned borrow
+// maps to 409.
+func (s *EchoServer) ReturnBorrow(ctx echo.Context) error {
+	borrowID := ctx.Param("borrow_id")
+	if borrowID == "" {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{
+			"status":  "Failed",
+			"message": "borrow_id is required",
+		})
+	}
+
+	borrow, err := s.DB.ReturnBorrow(ctx.Request().Context(), borrowID)
+	if err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{
+				"status":  "Failed",
+				"message": "Borrow record not found.",
+			})
+		case *dberrors.ConflictError:
+			return ctx.JSON(http.StatusConflict, echo.Map{
+				"status":  "Failed",
+				"message": "Book has already been returned.",
+			})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, echo.Map{
+				"status":  "Failed",
+				"message": "Internal server error, please try again later.",
+			})
+		}
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Book returned successfully.",
+		"data":    borrow,
+	})
+}
+
+// GetOverdueBorrows marks every active borrow past its due date as "overdue"
+// and returns the resulting set of overdue borrows.
+func (s *EchoServer) GetOverdueBorrows(ctx echo.Context) error {
+	borrows, err := s.DB.MarkOverdueBorrows(ctx.Request().Context())
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"status":  "Failed",
+			"message": "Internal server error, please try again later.",
+		})
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Overdue borrows retrieved successfully.",
+		"data":    borrows,
+	})
+}
+
 func (s *EchoServer) CreateBorrow(ctx echo.Context) error {
 	createBorrowRequest := new(models.CreateBorrowRequest)
 	if err := ctx.Bind(createBorrowRequest); err != nil {

@@ -198,6 +198,9 @@ func (s *EchoServer) registerRoutes() {
 	protectedRoutes := s.echo.Group("/loan")
 	protectedRoutes.Use(validateTokenMiddleware)
 	protectedRoutes.Any("/borrow", reverseProxy("http://loanservice-app:8082"))
+	protectedRoutes.Any("/return/:borrow_id", reverseProxy("http://loanservice-app:8082"))
+	protectedRoutes.Any("/:borrow_id/return", reverseProxy("http://loanservice-app:8082"))
+	protectedRoutes.GET("/overdue", reverseProxy("http://loanservice-app:8082"))
 
 	adminRoutes := s.echo.Group("/admin")
 	adminRoutes.Use(isAdminMiddleware)

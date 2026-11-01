@@ -26,6 +26,9 @@ type DatabaseClient interface {
 
 	GetActiveBorrowByUserIdAndBookId(ctx context.Context, bookId string, userId string) (*models.Borrow, error)
 	GetActiveBorrowsByBookId(ctx context.Context, bookId string) ([]models.Borrow, error)
+	GetBorrowById(ctx context.Context, borrowID string) (*models.Borrow, error)
+	ReturnBorrow(ctx context.Context, borrowID string) (*models.Borrow, error)
+	MarkOverdueBorrows(ctx context.Context) ([]models.Borrow, error)
 	CreateBorrow(ctx context.Context, borrow *models.Borrow) (*models.Borrow, error)
 }
 
