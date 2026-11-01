@@ -113,6 +113,12 @@ func (m *mockDatabaseClient) AttachGenre(ctx context.Context, bookID, genreID st
 func (m *mockDatabaseClient) DetachGenre(ctx context.Context, bookID, genreID string) error {
 	return nil
 }
+func (m *mockDatabaseClient) DecrementAvailableCopies(ctx context.Context, bookID string) error {
+	return nil
+}
+func (m *mockDatabaseClient) IncrementAvailableCopies(ctx context.Context, bookID string) error {
+	return nil
+}
 
 func TestGetByIdHandlers_MissingRecord_Returns404(t *testing.T) {
 	tests := []struct {

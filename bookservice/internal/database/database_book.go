@@ -205,3 +205,29 @@ func (c Client) DetachGenre(ctx context.Context, bookID, genreID string) error {
 	}
 	return nil
 }
+
+func (c Client) DecrementAvailableCopies(ctx context.Context, bookID string) error {
+	result := c.DB.WithContext(ctx).Model(&models.Book{}).
+		Where("book_id = ? AND available_copies > 0", bookID).
+		Update("available_copies", gorm.Expr("available_copies - 1"))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return &dberrors.NotFoundError{Entity: "book", ID: bookID}
+	}
+	return nil
+}
+
+func (c Client) IncrementAvailableCopies(ctx context.Context, bookID string) error {
+	result := c.DB.WithContext(ctx).Model(&models.Book{}).
+		Where("book_id = ?", bookID).
+		Update("available_copies", gorm.Expr("available_copies + 1"))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return &dberrors.NotFoundError{Entity: "book", ID: bookID}
+	}
+	return nil
+}

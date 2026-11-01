@@ -67,7 +67,7 @@ func TestIsBookAvailableToBorrow_ActiveBorrow_Returns404(t *testing.T) {
 	t.Setenv("LOANSERVICE_APP_PORT", "9")
 
 	server := &EchoServer{DB: &mockDatabaseClient{
-		book: &models.Book{BookID: "book-1", Title: "Title"},
+		book: &models.Book{BookID: "book-1", Title: "Title", AvailableCopies: 1},
 	}}
 
 	originalTransport := http.DefaultTransport
@@ -87,7 +87,7 @@ func TestIsBookAvailableToBorrow_NoActiveBorrow_Returns200(t *testing.T) {
 	t.Setenv("LOANSERVICE_APP_HOST", "127.0.0.1")
 	t.Setenv("LOANSERVICE_APP_PORT", "9")
 
-	book := &models.Book{BookID: "book-1", Title: "Title"}
+	book := &models.Book{BookID: "book-1", Title: "Title", AvailableCopies: 1}
 	server := &EchoServer{DB: &mockDatabaseClient{book: book}}
 
 	originalTransport := http.DefaultTransport
@@ -119,7 +119,7 @@ func TestIsBookAvailableToBorrow_UpstreamError_Returns500(t *testing.T) {
 	t.Setenv("LOANSERVICE_APP_PORT", "9")
 
 	server := &EchoServer{DB: &mockDatabaseClient{
-		book: &models.Book{BookID: "book-1", Title: "Title"},
+		book: &models.Book{BookID: "book-1", Title: "Title", AvailableCopies: 1},
 	}}
 
 	originalTransport := http.DefaultTransport
@@ -139,7 +139,7 @@ func TestIsBookAvailableToBorrow_MissingConfig_Returns500(t *testing.T) {
 	t.Setenv("LOANSERVICE_APP_PORT", "")
 
 	server := &EchoServer{DB: &mockDatabaseClient{
-		book: &models.Book{BookID: "book-1", Title: "Title"},
+		book: &models.Book{BookID: "book-1", Title: "Title", AvailableCopies: 1},
 	}}
 
 	rec := invokeIsBookAvailable(t, server)

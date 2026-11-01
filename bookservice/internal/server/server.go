@@ -69,6 +69,10 @@ type Server interface {
 	AttachGenre(ctx echo.Context) error
 	DetachGenre(ctx echo.Context) error
 
+	// Inventory
+	DecrementAvailableCopies(ctx echo.Context) error
+	IncrementAvailableCopies(ctx echo.Context) error
+
 	IsBookAvailableToBorrow(ctx echo.Context) error
 }
 
@@ -182,6 +186,8 @@ func (s *EchoServer) registerRoutes() {
 	adminBookGroup.DELETE("/:id/authors/:authorId", s.DetachAuthor)
 	adminBookGroup.POST("/:id/genres/:genreId", s.AttachGenre)
 	adminBookGroup.DELETE("/:id/genres/:genreId", s.DetachGenre)
+	adminBookGroup.POST("/:id/decrement", s.DecrementAvailableCopies)
+	adminBookGroup.POST("/:id/increment", s.IncrementAvailableCopies)
 
 	s.echo.GET("/isbookavailabletoboroow/:id", s.IsBookAvailableToBorrow)
 }

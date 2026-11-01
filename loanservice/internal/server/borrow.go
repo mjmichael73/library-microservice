@@ -145,6 +145,20 @@ func (s *EchoServer) ReturnBorrow(ctx echo.Context) error {
 			})
 		}
 	}
+	// Inventory (R-032): restore the copy.
+	bookServiceAppHost := os.Getenv("BOOKSERVICE_APP_HOST")
+	bookServiceAppPort := os.Getenv("BOOKSERVICE_APP_PORT")
+	if bookServiceAppHost != "" && bookServiceAppPort != "" {
+		incURL := "http://" + bookServiceAppHost + ":" + bookServiceAppPort + "/admin/books/" + borrow.BookID + "/increment"
+		incReq, err := http.NewRequestWithContext(ctx.Request().Context(), http.MethodPost, incURL, nil)
+		if err == nil {
+			injectSpan(ctx.Request().Context(), incReq)
+			incResp, err := (&http.Client{Timeout: 5 * time.Second}).Do(incReq)
+			if err == nil && incResp != nil {
+				incResp.Body.Close()
+			}
+		}
+	}
 	return ctx.JSON(http.StatusOK, echo.Map{
 		"status":  "Success",
 		"message": "Book returned successfully.",
@@ -264,6 +278,23 @@ func (s *EchoServer) CreateBorrow(ctx echo.Context) error {
 			"message": "Book is not available to borrow",
 		})
 	}
+
+	// Inventory (R-032): decrement available copies before creating the borrow.
+	decrementURL := "http://" + bookServiceAppHost + ":" + bookServiceAppPort + "/admin/books/" + bookId + "/decrement"
+	decReq, err := http.NewRequestWithContext(ctx.Request().Context(), http.MethodPost, decrementURL, nil)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{"status": "Failed", "message": "Internal server error, please try again later."})
+	}
+	injectSpan(ctx.Request().Context(), decReq)
+	decResp, err := client.Do(decReq)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{"status": "Failed", "message": "Internal server error, please try again later."})
+	}
+	defer decResp.Body.Close()
+	if decResp.StatusCode != http.StatusOK {
+		return ctx.JSON(http.StatusNotFound, echo.Map{"status": "Failed", "message": "Book is not available to borrow"})
+	}
+
 	newBorrow := &models.Borrow{
 		BorrowID:  uuid.NewString(),
 		UserID:    createBorrowRequest.UserID,

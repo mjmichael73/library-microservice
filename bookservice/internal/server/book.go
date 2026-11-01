@@ -48,12 +48,15 @@ func (s *EchoServer) CreateBook(ctx echo.Context) error {
 	}
 	switch err.(type) {
 	case *dberrors.NotFoundError:
+		totalCopies := 1
 		newBook := &models.Book{
-			BookID:    uuid.NewString(),
-			Title:     createBookRequest.Title,
-			Summary:   createBookRequest.Summary,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			BookID:          uuid.NewString(),
+			Title:           createBookRequest.Title,
+			Summary:         createBookRequest.Summary,
+			TotalCopies:     totalCopies,
+			AvailableCopies: totalCopies,
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
 		}
 		newBook, err := s.DB.CreateBook(ctx.Request().Context(), newBook)
 		if err != nil {
@@ -172,6 +175,14 @@ func (s *EchoServer) IsBookAvailableToBorrow(ctx echo.Context) error {
 		})
 	}
 
+	// Inventory (R-032): a book is only available if it has free copies.
+	if book.AvailableCopies <= 0 {
+		return ctx.JSON(http.StatusNotFound, echo.Map{
+			"status":  "Failed",
+			"message": "Book is not available to borrow.",
+		})
+	}
+
 	// A book row existing is not enough: it is only available if loanservice
 	// reports no active borrow for it (R-019).
 	loanServiceAppHost := os.Getenv("LOANSERVICE_APP_HOST")
@@ -273,4 +284,30 @@ func (s *EchoServer) DetachGenre(ctx echo.Context) error {
 		}
 	}
 	return ctx.JSON(http.StatusOK, echo.Map{"status": "Success", "message": "Genre detached from book successfully."})
+}
+
+func (s *EchoServer) DecrementAvailableCopies(ctx echo.Context) error {
+	ID := ctx.Param("id")
+	if err := s.DB.DecrementAvailableCopies(ctx.Request().Context(), ID); err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{"status": "Failed", "message": "Book not found or no copies available."})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, echo.Map{"status": "Failed", "message": "Internal server error, please try again later."})
+		}
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{"status": "Success", "message": "Available copies decremented."})
+}
+
+func (s *EchoServer) IncrementAvailableCopies(ctx echo.Context) error {
+	ID := ctx.Param("id")
+	if err := s.DB.IncrementAvailableCopies(ctx.Request().Context(), ID); err != nil {
+		switch err.(type) {
+		case *dberrors.NotFoundError:
+			return ctx.JSON(http.StatusNotFound, echo.Map{"status": "Failed", "message": "Book not found."})
+		default:
+			return ctx.JSON(http.StatusInternalServerError, echo.Map{"status": "Failed", "message": "Internal server error, please try again later."})
+		}
+	}
+	return ctx.JSON(http.StatusOK, echo.Map{"status": "Success", "message": "Available copies incremented."})
 }

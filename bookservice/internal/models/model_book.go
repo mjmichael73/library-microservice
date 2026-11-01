@@ -3,13 +3,15 @@ package models
 import "time"
 
 type Book struct {
-	BookID    string    `gorm:"primaryKey" json:"book_id"`
-	Title     string    `json:"title"`
-	Summary   string    `json:"description"`
-	Authors   []Author  `gorm:"-" json:"authors"`
-	Genres    []Genre   `gorm:"-" json:"genres"`
-	CreatedAt time.Time `json:"-"`
-	UpdatedAt time.Time `json:"-"`
+	BookID           string    `gorm:"primaryKey" json:"book_id"`
+	Title            string    `json:"title"`
+	Summary          string    `json:"description"`
+	TotalCopies      int       `json:"total_copies"`
+	AvailableCopies  int       `json:"available_copies"`
+	Authors          []Author  `gorm:"-" json:"authors"`
+	Genres           []Genre   `gorm:"-" json:"genres"`
+	CreatedAt        time.Time `json:"-"`
+	UpdatedAt        time.Time `json:"-"`
 }
 
 type CreateBookRequest struct {

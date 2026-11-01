@@ -46,6 +46,10 @@ type DatabaseClient interface {
 	UpdateBook(ctx context.Context, book *models.Book) (*models.Book, error)
 	DeleteBook(ctx context.Context, ID string) error
 
+	// Inventory (copies)
+	DecrementAvailableCopies(ctx context.Context, bookID string) error
+	IncrementAvailableCopies(ctx context.Context, bookID string) error
+
 	// Book ↔ author/genre associations
 	GetBookAuthors(ctx context.Context, bookID string) ([]models.Author, error)
 	GetBookGenres(ctx context.Context, bookID string) ([]models.Genre, error)

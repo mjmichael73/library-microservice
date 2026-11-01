@@ -337,6 +337,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-032 — Inventory management (copies)
 - **Severity:** P3
+- **Status:** Done
 - **Location:** bookservice
 - **Description:** Track total/available copies; decrement on borrow, increment on return.
 
