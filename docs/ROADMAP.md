@@ -159,9 +159,15 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-018 — UpdateBook/UpdateAuthor returning-slice panic risk
 - **Severity:** P1
+- **Status:** Done
 - **Location:** `bookservice/internal/database/database_book.go:56-80`, `database_author.go:53-75`
 - **Problem:** `Model(&slice)` + `clause.Returning{}` then `&slice[0]` can index out of range.
 - **Fix:** Use `Model(&models.Book{})`, `Updates(...).Scan(&result)` or re-fetch by ID.
+- **Note:** `UpdateBook`/`UpdateAuthor` now use `Model(&models.Book{})` /
+  `Model(&models.Author{})` with `Where` and `Updates`, keep the duplicate-key
+  conflict handling and `RowsAffected == 0` → `NotFoundError` check, and
+  re-fetch the record by ID to return the persisted value. Covered by
+  `bookservice/internal/database/update_test.go`.
 
 ### R-019 — Availability check ignores active loans
 - **Severity:** P1

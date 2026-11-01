@@ -8,7 +8,6 @@ import (
 	"github.com/mjmichael73/library-microservice/bookservice/internal/dberrors"
 	"github.com/mjmichael73/library-microservice/bookservice/internal/models"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 func (c Client) GetAllBooks(ctx context.Context, title string) ([]models.Book, error) {
@@ -58,10 +57,8 @@ func (c Client) GetBookById(ctx context.Context, ID string) (*models.Book, error
 }
 
 func (c Client) UpdateBook(ctx context.Context, book *models.Book) (*models.Book, error) {
-	var books []models.Book
 	result := c.DB.WithContext(ctx).
-		Model(&books).
-		Clauses(clause.Returning{}).
+		Model(&models.Book{}).
 		Where(&models.Book{BookID: book.BookID}).
 		Updates(models.Book{
 			Title:     book.Title,
@@ -80,7 +77,9 @@ func (c Client) UpdateBook(ctx context.Context, book *models.Book) (*models.Book
 			ID:     book.BookID,
 		}
 	}
-	return &books[0], nil
+	// Re-fetch the record rather than relying on a returned slice, which can
+	// be empty (or shorter than expected) and panic when indexed.
+	return c.GetBookById(ctx, book.BookID)
 }
 
 func (c Client) DeleteBook(ctx context.Context, ID string) error {

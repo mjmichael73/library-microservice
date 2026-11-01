@@ -7,7 +7,6 @@ import (
 	"github.com/mjmichael73/library-microservice/bookservice/internal/dberrors"
 	"github.com/mjmichael73/library-microservice/bookservice/internal/models"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 func (c Client) GetAllAuthors(ctx context.Context, name string) ([]models.Author, error) {
@@ -55,10 +54,8 @@ func (c Client) GetAuthorById(ctx context.Context, ID string) (*models.Author, e
 }
 
 func (c Client) UpdateAuthor(ctx context.Context, author *models.Author) (*models.Author, error) {
-	var authors []models.Author
 	result := c.DB.WithContext(ctx).
-		Model(&authors).
-		Clauses(clause.Returning{}).
+		Model(&models.Author{}).
 		Where(&models.Author{AuthorID: author.AuthorID}).
 		Updates(models.Author{
 			Name: author.Name,
@@ -75,7 +72,9 @@ func (c Client) UpdateAuthor(ctx context.Context, author *models.Author) (*model
 			ID:     author.AuthorID,
 		}
 	}
-	return &authors[0], nil
+	// Re-fetch the record rather than relying on a returned slice, which can
+	// be empty (or shorter than expected) and panic when indexed.
+	return c.GetAuthorById(ctx, author.AuthorID)
 }
 
 func (c Client) DeleteAuthor(ctx context.Context, ID string) error {
