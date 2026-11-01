@@ -39,11 +39,7 @@ func (c Client) RegisterUser(ctx context.Context, user *models.User) (*models.Us
 	user.UserID = uuid.NewString()
 	result := c.DB.WithContext(ctx).Create(&user)
 	if result.Error != nil {
-		// TODO: Fix here later on
-		if result.Error.(*pgconn.PgError).Code == "23505" {
-			return nil, &dberrors.ConflictError{}
-		}
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+		if isDuplicateKeyError(result.Error) {
 			return nil, &dberrors.ConflictError{}
 		}
 		return nil, result.Error
@@ -52,4 +48,22 @@ func (c Client) RegisterUser(ctx context.Context, user *models.User) (*models.Us
 		return nil, &dberrors.ConflictError{}
 	}
 	return user, nil
+}
+
+// isDuplicateKeyError reports whether err represents a unique-constraint
+// violation. It checks gorm.ErrDuplicatedKey first (which the Postgres driver
+// translates from SQLSTATE 23505) and then falls back to a safe type assertion
+// on *pgconn.PgError so that a non-PgError error never causes a panic.
+func isDuplicateKeyError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		return true
+	}
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr != nil && pgErr.Code == "23505" {
+		return true
+	}
+	return false
 }
