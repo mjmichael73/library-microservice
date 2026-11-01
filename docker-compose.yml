@@ -11,6 +11,11 @@ services:
     volumes:
       - userservice_db_data:/var/lib/postgresql/data
       - ./userservice/data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - library_microservice_net
   userservice-app:
@@ -19,7 +24,8 @@ services:
     ports:
       - "$USERSERVICE_APP_PORT:8080"
     depends_on:
-      - userservice-db
+      userservice-db:
+        condition: service_healthy
     env_file:
       - .env
     volumes:
@@ -38,6 +44,11 @@ services:
     volumes:
       - bookservice_db_data:/var/lib/postgresql/data
       - ./bookservice/data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - library_microservice_net
   bookservice-app:
@@ -46,7 +57,8 @@ services:
     ports:
       - "$BOOKSERVICE_APP_PORT:8081"
     depends_on:
-      - bookservice-db
+      bookservice-db:
+        condition: service_healthy
     env_file:
       - .env
     volumes:
@@ -65,6 +77,11 @@ services:
     volumes:
       - loanservice_db_data:/var/lib/postgresql/data
       - ./loanservice/data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - library_microservice_net
   loanservice-app:
@@ -73,7 +90,8 @@ services:
     ports:
       - "$LOANSERVICE_APP_PORT:8082"
     depends_on:
-      - loanservice-db
+      loanservice-db:
+        condition: service_healthy
     env_file:
       - .env
     volumes:

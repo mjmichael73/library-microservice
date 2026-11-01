@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -12,6 +13,12 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+)
+
+const (
+	dbConnectAttempts = 10
+	dbConnectBaseWait = time.Second
+	dbConnectMaxWait  = 10 * time.Second
 )
 
 type DatabaseClient interface {
@@ -42,15 +49,7 @@ func NewDatabaseClient() (DatabaseClient, error) {
 		return nil, fmt.Errorf("invalid DB_PORT value : %s", dbPort)
 	}
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", dbHost, dbPortInt, dbUser, dbPass, dbName, "disable")
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			TablePrefix: dbTablePrefix,
-		},
-		NowFunc: func() time.Time {
-			return time.Now().UTC()
-		},
-		QueryFields: true,
-	})
+	db, err := openWithRetry(dsn, dbTablePrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +57,50 @@ func NewDatabaseClient() (DatabaseClient, error) {
 		DB: db,
 	}
 	return client, nil
+}
+
+// openWithRetry opens the database connection and verifies it with a ping,
+// retrying with exponential backoff (1s, 2s, 4s, ... capped at 10s) until the
+// database becomes available. This guards against the app starting before the
+// database container is ready to accept connections.
+func openWithRetry(dsn string, tablePrefix string) (*gorm.DB, error) {
+	var lastErr error
+	wait := dbConnectBaseWait
+
+	for attempt := 1; attempt <= dbConnectAttempts; attempt++ {
+		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+			NamingStrategy: schema.NamingStrategy{
+				TablePrefix: tablePrefix,
+			},
+			NowFunc: func() time.Time {
+				return time.Now().UTC()
+			},
+			QueryFields: true,
+		})
+		if err == nil {
+			sqlDB, sqlErr := db.DB()
+			if sqlErr != nil {
+				err = sqlErr
+			} else if pingErr := sqlDB.Ping(); pingErr != nil {
+				err = pingErr
+			} else {
+				return db, nil
+			}
+		}
+
+		lastErr = err
+		if attempt == dbConnectAttempts {
+			break
+		}
+		log.Printf("database not ready (attempt %d/%d): %v; retrying in %s", attempt, dbConnectAttempts, err, wait)
+		time.Sleep(wait)
+		wait *= 2
+		if wait > dbConnectMaxWait {
+			wait = dbConnectMaxWait
+		}
+	}
+
+	return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", dbConnectAttempts, lastErr)
 }
 
 func (c Client) Ready() bool {

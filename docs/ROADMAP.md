@@ -132,6 +132,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-015 — No healthchecks / depends_on conditions
 - **Severity:** P1
+- **Status:** Done
 - **Location:** `docker-compose.yml`
 - **Problem:** Apps can start before DB is ready; no retry in `NewDatabaseClient`.
 - **Fix:** Add `healthcheck` (pg_isready) and `depends_on: condition: service_healthy`; add retry/backoff in DB client.
