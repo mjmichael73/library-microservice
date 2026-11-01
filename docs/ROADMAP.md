@@ -304,12 +304,14 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-029 — No automated tests
 - **Severity:** P1
+- **Status:** Done
 - **Location:** repository-wide
 - **Problem:** Zero `*_test.go`.
 - **Fix:** See [docs/TESTING.md](TESTING.md).
 
 ### R-030 — No CI pipeline
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `.github/workflows` (missing)
 - **Problem:** No automated build/vet/test on PRs.
 - **Fix:** Add GitHub Actions workflow.
