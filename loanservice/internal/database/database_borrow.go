@@ -27,5 +27,5 @@ func (c Client) CreateBorrow(ctx context.Context, borrow *models.Borrow) (*model
 		}
 		return nil, result.Error
 	}
-	return nil, nil
+	return borrow, nil
 }

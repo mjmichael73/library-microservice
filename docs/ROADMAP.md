@@ -56,9 +56,14 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-007 — CreateBorrow returns nil borrow
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `loanservice/internal/database/database_borrow.go:22-30`
 - **Problem:** Returns `nil, nil` instead of the created borrow; handler can't return data.
 - **Fix:** Return `borrow, nil`.
+- **Note:** `CreateBorrow` now returns the created borrow on success; the
+  duplicate-key path still returns `nil, dberrors.ConflictError`. Covered by
+  `loanservice/internal/database/database_borrow_test.go`
+  (`TestCreateBorrow_ReturnsCreatedBorrow`, `TestCreateBorrow_Duplicate_ReturnsConflict`).
 
 ### R-008 — Debug Sentry call on every request
 - **Severity:** P2
