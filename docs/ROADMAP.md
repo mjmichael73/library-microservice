@@ -38,6 +38,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-005 — LoginUser default error returns 404
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `userservice/internal/server/user.go:115-117`
 - **Problem:** DB error path returns 404 instead of 500.
 - **Fix:** Return 500 for unexpected errors.

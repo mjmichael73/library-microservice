@@ -113,7 +113,7 @@ func (s *EchoServer) LoginUser(ctx echo.Context) error {
 				"message": "Email or password is wrong",
 			})
 		default:
-			return ctx.JSON(http.StatusNotFound, echo.Map{
+			return ctx.JSON(http.StatusInternalServerError, echo.Map{
 				"status":  "Failed",
 				"message": "Internal server error, please try again later.",
 			})

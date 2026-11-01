@@ -17,7 +17,8 @@ import (
 )
 
 type mockUserDB struct {
-	registerFn func(context.Context, *models.User) (*models.User, error)
+	registerFn   func(context.Context, *models.User) (*models.User, error)
+	getByEmailFn func(context.Context, string) (*models.User, error)
 }
 
 func (m *mockUserDB) Ready() bool { return true }
@@ -30,6 +31,9 @@ func (m *mockUserDB) RegisterUser(ctx context.Context, user *models.User) (*mode
 }
 
 func (m *mockUserDB) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	if m.getByEmailFn != nil {
+		return m.getByEmailFn(ctx, email)
+	}
 	return nil, errors.New("not implemented")
 }
 
@@ -122,5 +126,49 @@ func TestRegisterUser_SuccessReturns201(t *testing.T) {
 	}
 	if resp["status"] != "Success" {
 		t.Fatalf("status field = %v, want Success", resp["status"])
+	}
+}
+
+func TestLoginUser_UnexpectedDBErrorReturns500(t *testing.T) {
+	db := &mockUserDB{
+		getByEmailFn: func(ctx context.Context, email string) (*models.User, error) {
+			return nil, errors.New("db down")
+		},
+	}
+	s := newTestEchoServer(db)
+
+	body := `{"email":"a@b.com","password":"secret"}`
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewBufferString(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := s.echo.NewContext(req, rec)
+
+	if err := s.LoginUser(c); err != nil {
+		t.Fatalf("handler returned error: %v", err)
+	}
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
+	}
+}
+
+func TestLoginUser_NotFoundReturns401(t *testing.T) {
+	db := &mockUserDB{
+		getByEmailFn: func(ctx context.Context, email string) (*models.User, error) {
+			return nil, &dberrors.NotFoundError{}
+		},
+	}
+	s := newTestEchoServer(db)
+
+	body := `{"email":"a@b.com","password":"secret"}`
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewBufferString(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := s.echo.NewContext(req, rec)
+
+	if err := s.LoginUser(c); err != nil {
+		t.Fatalf("handler returned error: %v", err)
+	}
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 }
