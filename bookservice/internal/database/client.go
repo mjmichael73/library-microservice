@@ -52,8 +52,6 @@ func NewDatabaseClient() (DatabaseClient, error) {
 	dbPass := os.Getenv("BOOKSERVICE_DB_PASS")
 	dbTablePrefix := os.Getenv("BOOKSERVICE_DB_TABLE_PREFIX")
 
-	fmt.Println(dbHost, dbPort, dbName, dbUser, dbPass, dbTablePrefix)
-
 	if dbHost == "" || dbPort == "" || dbName == "" || dbUser == "" || dbPass == "" || dbTablePrefix == "" {
 		return nil, errors.New("one or more required environment variables are not set")
 	}

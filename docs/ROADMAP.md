@@ -93,6 +93,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-010 — DB credentials logged
 - **Severity:** P1
+- **Status:** Done
 - **Location:** `userservice/internal/database/client.go:38`, `bookservice/.../client.go:55`, `loanservice/.../client.go:36`
 - **Problem:** `fmt.Println(... dbPass ...)` leaks credentials.
 - **Fix:** Remove or log only host/dbname.
