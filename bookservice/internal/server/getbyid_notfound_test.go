@@ -17,6 +17,13 @@ import (
 // remaining methods exist to satisfy the interface.
 type mockDatabaseClient struct {
 	err error
+
+	// Author creation support (R-004). Zero values preserve the previous
+	// behaviour for the Get*ById tests.
+	authorByName    *models.Author
+	authorByNameErr error
+	createdAuthor   *models.Author
+	createAuthorErr error
 }
 
 func (m *mockDatabaseClient) Ready() bool { return true }
@@ -38,10 +45,10 @@ func (m *mockDatabaseClient) GetAllAuthors(ctx context.Context, name string) ([]
 	return nil, nil
 }
 func (m *mockDatabaseClient) GetAuthorByName(ctx context.Context, name string) (*models.Author, error) {
-	return nil, nil
+	return m.authorByName, m.authorByNameErr
 }
 func (m *mockDatabaseClient) CreateAuthor(ctx context.Context, author *models.Author) (*models.Author, error) {
-	return nil, nil
+	return m.createdAuthor, m.createAuthorErr
 }
 func (m *mockDatabaseClient) GetAuthorById(ctx context.Context, ID string) (*models.Author, error) {
 	return nil, m.err

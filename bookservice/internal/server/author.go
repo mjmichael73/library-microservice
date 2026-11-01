@@ -63,7 +63,7 @@ func (s *EchoServer) CreateAuthor(ctx echo.Context) error {
 			}
 		}
 		return ctx.JSON(http.StatusCreated, echo.Map{
-			"status":  "Failed",
+			"status":  "Success",
 			"message": "Author created successfully.",
 			"data":    newAuthor,
 		})

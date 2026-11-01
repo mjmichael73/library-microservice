@@ -31,6 +31,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-004 — CreateAuthor success reported as "Failed"
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `bookservice/internal/server/author.go:65`
 - **Problem:** Response status string is `"Failed"` on a successful creation.
 - **Fix:** Change to `"Success"`.
