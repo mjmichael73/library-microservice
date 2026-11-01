@@ -67,9 +67,13 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-008 — Debug Sentry call on every request
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `apigatewayservice/internal/server/server.go:75`
 - **Problem:** `sentry.CaptureMessage("GO HERE " + target)` in `reverseProxy` runs per request.
 - **Fix:** Remove the line.
+- **Note:** Debug `sentry.CaptureMessage` removed from `reverseProxy`. Sentry is
+  still used for init and the Echo middleware, so the import is retained.
+  Covered by `apigatewayservice/internal/server/reverse_proxy_test.go`.
 
 ---
 

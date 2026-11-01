@@ -72,7 +72,6 @@ func (s *EchoServer) Liveness(ctx echo.Context) error {
 }
 
 func reverseProxy(target string) echo.HandlerFunc {
-	sentry.CaptureMessage("GO HERE " + target)
 	return func(c echo.Context) error {
 		targetURL, err := url.Parse(target)
 		if err != nil {
