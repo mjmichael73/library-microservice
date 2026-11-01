@@ -81,9 +81,15 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-009 — Hardcoded secrets
 - **Severity:** P0
+- **Status:** Done
 - **Location:** `userservice/internal/server/user.go:15`, `server.go:115`, `apigatewayservice/internal/server/server.go:45`
 - **Problem:** JWT secret and Sentry DSN are hardcoded.
 - **Fix:** Read from env (`JWT_SECRET`, `SENTRY_DSN`); fail fast if missing.
+- **Note:** `userservice` reads `JWT_SECRET` in `NewEchoServer` (`log.Fatal`
+  when empty), stores it on `EchoServer.JWTSecret`, and uses it for signing
+  (`RegisterUser`/`LoginUser`) and `echojwt.JWT`. `apigatewayservice` reads
+  `SENTRY_DSN` in `NewEchoServer` (`log.Fatal` when empty). Both variables are
+  documented as placeholders in `.env.example`.
 
 ### R-010 — DB credentials logged
 - **Severity:** P1

@@ -46,6 +46,7 @@ func newTestEchoServer(db database.DatabaseClient) *EchoServer {
 		echo:          echo.New(),
 		DB:            db,
 		KafkaProducer: NewKafkaProducer("127.0.0.1:1"),
+		JWTSecret:     []byte("test-secret"),
 	}
 	s.echo.Validator = &CustomValidator{validator: validator.New()}
 	return s

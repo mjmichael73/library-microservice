@@ -51,10 +51,11 @@ type Server interface {
 }
 
 type EchoServer struct {
-	echo   *echo.Echo
-	DB     database.DatabaseClient
-	closer io.Closer
+	echo          *echo.Echo
+	DB            database.DatabaseClient
+	closer        io.Closer
 	KafkaProducer *KafkaProducer
+	JWTSecret     []byte
 }
 
 func NewEchoServer(db database.DatabaseClient) Server {
@@ -62,6 +63,11 @@ func NewEchoServer(db database.DatabaseClient) Server {
 		echo: echo.New(),
 		DB:   db,
 	}
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is not set")
+	}
+	server.JWTSecret = []byte(jwtSecret)
 	server.echo.Validator = &CustomValidator{validator: validator.New()}
 	closer, err := server.initJaeger()
 	if err != nil {
@@ -112,7 +118,7 @@ func (s *EchoServer) registerRoutes() {
 	authGroup.POST("/login", s.LoginUser)
 
 	userGroup := s.echo.Group("/user")
-	userGroup.Use(echojwt.JWT([]byte("your-secret-key")))
+	userGroup.Use(echojwt.JWT(s.JWTSecret))
 	userGroup.GET("/validate-token", s.ValidateToken)
 	userGroup.GET("/is-admin", s.IsAdmin)
 }

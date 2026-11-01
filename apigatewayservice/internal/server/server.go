@@ -42,8 +42,12 @@ func NewEchoServer() Server {
 	}
 	server.closer = closer
 
+	sentryDSN := os.Getenv("SENTRY_DSN")
+	if sentryDSN == "" {
+		log.Fatal("SENTRY_DSN is not set")
+	}
 	if err := sentry.Init(sentry.ClientOptions{
-		Dsn: "https://5ae33dfde257f10751bb7f085b115a40@o4504689622384640.ingest.us.sentry.io/4509215776047104",
+		Dsn: sentryDSN,
 	}); err != nil {
 		fmt.Printf("Sentry initialization failed: %v\n", err)
 	}

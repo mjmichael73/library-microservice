@@ -12,8 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecret = []byte("your-secret-key")
-
 func (s *EchoServer) RegisterUser(ctx echo.Context) error {
 	registerRequest := new(models.RegisterRequest)
 	if err := ctx.Bind(registerRequest); err != nil {
@@ -61,7 +59,7 @@ func (s *EchoServer) RegisterUser(ctx echo.Context) error {
 		"user_id": user.UserID,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	})
-	tokenString, err := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(s.JWTSecret)
 	registerResponse := models.RegisterResponse{
 		FirstName: resultUser.FirstName,
 		LastName:  resultUser.LastName,
@@ -130,7 +128,7 @@ func (s *EchoServer) LoginUser(ctx echo.Context) error {
 		"user_id": user.UserID,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	})
-	tokenString, err := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(s.JWTSecret)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, echo.Map{
 			"status":  "Failed",
