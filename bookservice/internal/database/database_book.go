@@ -87,9 +87,20 @@ func (c Client) DeleteBook(ctx context.Context, ID string) error {
 	result := c.DB.WithContext(ctx).Delete(&models.Book{BookID: ID})
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return &dberrors.NotFoundError{}
+			return &dberrors.NotFoundError{
+				Entity: "book",
+				ID:     ID,
+			}
 		}
 		return result.Error
+	}
+	// GORM does not return an error when Delete matches no rows, so guard
+	// against reporting success for a record that does not exist.
+	if result.RowsAffected == 0 {
+		return &dberrors.NotFoundError{
+			Entity: "book",
+			ID:     ID,
+		}
 	}
 	return nil
 }

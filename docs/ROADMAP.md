@@ -45,9 +45,14 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-006 — Delete of missing record succeeds
 - **Severity:** P2
+- **Status:** Done
 - **Location:** `bookservice/internal/database/database_book.go:82`, `database_author.go:77`
 - **Problem:** GORM `Delete` doesn't error on 0 rows; handler returns success.
-- **Fix:** Check `result.RowsAffected == 0` → `NotFoundError`.
+- **Fix:** Check `result.RowsAffected == 0` → `NotFoundError` with entity/id.
+- **Note:** `DeleteBook`/`DeleteAuthor` now return a populated
+  `dberrors.NotFoundError{Entity, ID}` on both `gorm.ErrRecordNotFound` and
+  zero rows affected, so the existing handlers map to HTTP 404. Covered by
+  `bookservice/internal/database/delete_notfound_test.go`.
 
 ### R-007 — CreateBorrow returns nil borrow
 - **Severity:** P2
