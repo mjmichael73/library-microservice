@@ -98,9 +98,16 @@ services:
       - ./loanservice:/app
     networks:
       - library_microservice_net
-  # notificationservice is not yet implemented (see R-033), so it has no
-  # compose entry here and no NOTIFICATIONSERVICE_* env vars. Add both when
-  # the service lands.
+  notificationservice-app:
+    build: ./notificationservice
+    container_name: notificationservice-app
+    depends_on:
+      - broker
+    env_file:
+      - .env
+    networks:
+      - library_microservice_net
+
   apigateway-app:
     build: ./apigatewayservice
     container_name: $APIGATEWAYSERVICE_APP_HOST

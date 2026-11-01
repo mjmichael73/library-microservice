@@ -343,6 +343,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-033 — Notifications service
 - **Severity:** P3
+- **Status:** Done
 - **Location:** `notificationservice/`
 - **Description:** Implement Kafka consumer for `user-registered-topic` and borrow events; send emails.
 
