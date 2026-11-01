@@ -27,25 +27,36 @@ type mockDatabaseClient struct {
 	authorByNameErr error
 	createdAuthor   *models.Author
 	createAuthorErr error
+
+	// List and genre-creation support (R-020). Zero values preserve the
+	// previous behaviour for the other tests.
+	authors        []models.Author
+	authorsErr     error
+	genres         []models.Genre
+	genresErr      error
+	genreByTitle   *models.Genre
+	genreTitleErr  error
+	createdGenre   *models.Genre
+	createGenreErr error
 }
 
 func (m *mockDatabaseClient) Ready() bool { return true }
 
 func (m *mockDatabaseClient) GetAllGenres(ctx context.Context, title string) ([]models.Genre, error) {
-	return nil, nil
+	return m.genres, m.genresErr
 }
 func (m *mockDatabaseClient) GetGenreByTitle(ctx context.Context, title string) (*models.Genre, error) {
-	return nil, nil
+	return m.genreByTitle, m.genreTitleErr
 }
 func (m *mockDatabaseClient) CreateGenre(ctx context.Context, genre *models.Genre) (*models.Genre, error) {
-	return nil, nil
+	return m.createdGenre, m.createGenreErr
 }
 func (m *mockDatabaseClient) GetGenreById(ctx context.Context, ID string) (*models.Genre, error) {
 	return nil, m.err
 }
 
 func (m *mockDatabaseClient) GetAllAuthors(ctx context.Context, name string) ([]models.Author, error) {
-	return nil, nil
+	return m.authors, m.authorsErr
 }
 func (m *mockDatabaseClient) GetAuthorByName(ctx context.Context, name string) (*models.Author, error) {
 	return m.authorByName, m.authorByNameErr

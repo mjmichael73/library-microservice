@@ -188,9 +188,16 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-020 — Inconsistent response envelopes
 - **Severity:** P2
+- **Status:** Done
 - **Location:** multiple handlers
 - **Problem:** Mixed shapes: raw slices, `{status,message,data}`, `Failed` on success.
 - **Fix:** Adopt one envelope; document in DEVELOPMENT.md.
+- **Note:** `bookservice` handlers now consistently return `{status, message, data}`:
+  `GetAllAuthors` and `GetAllGenres` wrap their slices (previously raw arrays) and
+  `CreateGenre` returns `201` with "Genre created successfully." and the created
+  genre, mirroring `CreateAuthor`/`CreateBook`. Error/validation responses keep
+  their existing `status`/`message` shape (and add `data` only on success).
+  Covered by `bookservice/internal/server/envelope_r020_test.go`.
 
 ### R-021 — Book↔author/genre associations not exposed
 - **Severity:** P2

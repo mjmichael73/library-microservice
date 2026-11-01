@@ -16,7 +16,11 @@ func (s *EchoServer) GetAllAuthors(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
-	return ctx.JSON(http.StatusOK, authors)
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Authors received successfully.",
+		"data":    authors,
+	})
 }
 
 func (s *EchoServer) CreateAuthor(ctx echo.Context) error {

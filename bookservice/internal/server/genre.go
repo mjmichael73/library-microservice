@@ -16,7 +16,11 @@ func (s *EchoServer) GetAllGenres(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
-	return ctx.JSON(http.StatusOK, genres)
+	return ctx.JSON(http.StatusOK, echo.Map{
+		"status":  "Success",
+		"message": "Genres received successfully.",
+		"data":    genres,
+	})
 }
 
 func (s *EchoServer) CreateGenre(ctx echo.Context) error {
@@ -59,7 +63,11 @@ func (s *EchoServer) CreateGenre(ctx echo.Context) error {
 				return ctx.JSON(http.StatusInternalServerError, err)
 			}
 		}
-		return ctx.JSON(http.StatusOK, newGenre)
+		return ctx.JSON(http.StatusCreated, echo.Map{
+			"status":  "Success",
+			"message": "Genre created successfully.",
+			"data":    newGenre,
+		})
 	default:
 		return ctx.JSON(http.StatusInternalServerError, err)
 
