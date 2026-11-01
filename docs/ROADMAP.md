@@ -107,6 +107,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-012 — Malformed notification table prefix
 - **Severity:** P3
+- **Status:** Done
 - **Location:** `.env:39`
 - **Problem:** `NOTIFICATIONSERVICE_DB_TABLE_PREFIX=".notificationservice"` (leading dot).
 - **Fix:** Set to `notificationservice.`.

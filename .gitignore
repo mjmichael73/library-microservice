@@ -2,5 +2,3 @@
 .codegraph/
 .env
 *.env.local
-
-.env
