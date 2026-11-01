@@ -73,14 +73,12 @@ func (s *EchoServer) CreateBorrow(ctx echo.Context) error {
 			"data":    err.Error(),
 		})
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		return ctx.JSON(http.StatusNotFound, echo.Map{
 			"status":  "Failed",
 			"message": "Book is not available to borrow",
 		})
-	}
-	if resp.Body != nil {
-		defer resp.Body.Close()
 	}
 	newBorrow := &models.Borrow{
 		BorrowID:  uuid.NewString(),

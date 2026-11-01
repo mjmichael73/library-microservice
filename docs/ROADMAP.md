@@ -24,6 +24,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-003 — HTTP response body leak in borrow flow
 - **Severity:** P1
+- **Status:** Done
 - **Location:** `loanservice/internal/server/borrow.go:76-84`
 - **Problem:** `resp.Body.Close()` only runs on the success path; non-200 returns leak the body.
 - **Fix:** `defer resp.Body.Close()` immediately after a successful `client.Do`.
