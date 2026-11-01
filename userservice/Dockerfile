@@ -10,5 +10,4 @@ RUN CGO_ENABLED=0 go build -o /main -ldflags="-w -s" .
 
 FROM golang:1.23.4-alpine
 COPY --from=build /main /main
-RUN sleep 15
 CMD ["/main"]

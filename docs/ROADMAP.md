@@ -125,6 +125,7 @@ Severity: **P0** critical, **P1** high, **P2** medium, **P3** low.
 
 ### R-014 — `RUN sleep 15` in Dockerfiles
 - **Severity:** P2
+- **Status:** Done
 - **Location:** all `Dockerfile`s
 - **Problem:** Artificial startup delay in final image.
 - **Fix:** Remove the line.
